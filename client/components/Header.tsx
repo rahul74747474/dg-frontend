@@ -4,6 +4,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import { Search, Heart, ShoppingCart, User } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
@@ -43,6 +44,7 @@ const categoryMap: Record<string, string> = {
 
 function BigHeader() {
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { items: cartItems = [] } = useCart();
   const { items: wishlistItems = [] } = useWishlist();
   const { user, setUser, isAuthenticated } = useAuth();
@@ -89,7 +91,35 @@ function BigHeader() {
 
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
         <Container>
-          <div className="grid grid-cols-3 items-center py-4">
+          {/* MOBILE HEADER */}
+<div className="flex items-center justify-between py-3 md:hidden">
+
+  {/* LEFT - MENU */}
+  <button onClick={() => setIsMenuOpen(true)}>
+    <Menu className="w-6 h-6" />
+  </button>
+  {/* CENTER - LOGO */}
+  <Link to="/">
+    <img
+      src="https://i.ibb.co/rfKq4JJC/dg-logo.webp"
+      className="h-12"
+    />
+  </Link>
+
+  {/* RIGHT - ICONS */}
+  <div className="flex items-center gap-3">
+    <button onClick={() => navigate("/wishlist")}>
+      <Heart className="w-5 h-5" />
+    </button>
+
+    <button onClick={() => navigate("/cart")}>
+      <ShoppingCart className="w-5 h-5" />
+    </button>
+  </div>
+</div>
+
+{/* DESKTOP HEADER */}
+<div className="hidden md:grid grid-cols-3 items-center py-4">
             {/* SEARCH */}
             <form onSubmit={handleSearchSubmit} className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -199,7 +229,7 @@ function BigHeader() {
         </Container>
 
         {/* NAV */}
-        <div className="border-t">
+        <div className="hidden md:block border-t">
           <Container>
             <nav className="flex justify-center gap-8 py-3">
               {navItems.map((item) => (
@@ -219,6 +249,79 @@ function BigHeader() {
             </nav>
           </Container>
         </div>
+        {/* MOBILE DRAWER */}
+<div
+  className={`fixed inset-0 z-50 ${isMenuOpen ? "visible" : "invisible"}`}
+>
+  {/* OVERLAY */}
+  <div
+    className={`absolute inset-0 bg-black/40 transition ${
+      isMenuOpen ? "opacity-100" : "opacity-0"
+    }`}
+    onClick={() => setIsMenuOpen(false)}
+  />
+
+  {/* DRAWER */}
+  <div
+    className={`absolute left-0 top-0 h-full w-72 bg-white shadow-lg transform transition ${
+      isMenuOpen ? "translate-x-0" : "-translate-x-full"
+    }`}
+  >
+    {/* HEADER */}
+    <div className="flex justify-between items-center p-4 border-b">
+      <span className="font-semibold">Menu</span>
+      <button onClick={() => setIsMenuOpen(false)}>
+        <X />
+      </button>
+    </div>
+
+    {/* SEARCH */}
+    <form onSubmit={handleSearchSubmit} className="p-4">
+      <input
+        type="text"
+        placeholder="Search..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full border p-2 rounded"
+      />
+    </form>
+
+    {/* NAV ITEMS */}
+    <nav className="flex flex-col gap-4 px-4">
+      {navItems.map((item) => (
+        <button
+          key={item}
+          onClick={() => {
+            navigate(categoryMap[item]);
+            setIsMenuOpen(false);
+          }}
+          className="text-left text-gray-700"
+        >
+          {item}
+        </button>
+      ))}
+    </nav>
+
+    {/* ACTIONS */}
+    <div className="mt-6 px-4 flex gap-4">
+      <button onClick={() => navigate("/wishlist")}>
+        <Heart />
+      </button>
+
+      <button
+        onClick={() =>
+          navigate(isAuthenticated ? "/account" : "/login")
+        }
+      >
+        <User />
+      </button>
+
+      <button onClick={() => navigate("/cart")}>
+        <ShoppingCart />
+      </button>
+    </div>
+  </div>
+</div>
       </header>
     </>
   );

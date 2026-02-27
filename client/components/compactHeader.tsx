@@ -4,7 +4,6 @@ import {
   Heart,
   ShoppingCart,
   User,
-  ChevronDown,
   Menu,
   X,
 } from "lucide-react";
@@ -20,17 +19,17 @@ import api from "@/api/axios";
 /* ---------------- NAV ITEMS ---------------- */
 
 const navItems = [
-  { label: "Home", path: "/", hasDropdown: false },
-  { label: "Shop", path: "/shop", hasDropdown: true },
-  { label: "Track Order", path: "/track-order", hasDropdown: false },
-  { label: "About Us", path: "/about", hasDropdown: false },
-  { label: "Contact Us", path: "/contact", hasDropdown: false },
+  { label: "Home", path: "/" },
+  { label: "Shop", path: "/shop" },
+  { label: "Track Order", path: "/track-order" },
+  { label: "About Us", path: "/about" },
+  { label: "Contact Us", path: "/contact" },
 ];
 
 export default function Header() {
   const navigate = useNavigate();
-  const { items: cartItems } = useCart();
-  const { items: wishlistItems } = useWishlist();
+  const { items: cartItems = [] } = useCart();
+  const { items: wishlistItems = [] } = useWishlist();
   const { user, setUser, isAuthenticated } = useAuth();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -40,7 +39,7 @@ export default function Header() {
 
   const profileRef = useRef<HTMLDivElement | null>(null);
 
-  /* -------- close profile dropdown on outside click -------- */
+  /* CLOSE PROFILE DROPDOWN */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -72,51 +71,80 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-lighter">
+    <header className="sticky top-0 z-50 bg-white border-b">
       <Container>
-        <div className="h-[70px] flex items-center justify-between">
-          {/* LOGO */}
-          <Link to="/" className="flex items-center">
+
+        {/* ================= MOBILE HEADER ================= */}
+        <div className="flex items-center justify-between py-3 md:hidden">
+
+          {/* LEFT */}
+          <button onClick={() => setIsMenuOpen(true)}>
+            <Menu className="w-6 h-6" />
+          </button>
+
+          {/* CENTER */}
+          <Link to="/">
             <img
               src="https://i.ibb.co/rfKq4JJC/dg-logo.webp"
-              alt="DesiiGlobal"
+              className="h-12"
+            />
+          </Link>
+
+          {/* RIGHT */}
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate("/wishlist")}>
+              <Heart className="w-5 h-5" />
+            </button>
+
+            <button onClick={() => navigate("/cart")}>
+              <ShoppingCart className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* ================= DESKTOP HEADER ================= */}
+        <div className="hidden md:flex items-center justify-between h-[70px]">
+
+          {/* LOGO */}
+          <Link to="/">
+            <img
+              src="https://i.ibb.co/rfKq4JJC/dg-logo.webp"
               className="h-14 md:h-20"
             />
           </Link>
 
-          {/* DESKTOP NAV */}
+          {/* NAV */}
           <nav className="hidden lg:flex items-center gap-8">
             {navItems.map((item) => (
-              <div key={item.label} className="flex items-center gap-1">
-                <NavLink
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `text-sm font-medium ${
-                      isActive
-                        ? "text-brand-purple"
-                        : "text-brand-gray-dark"
-                    }`
-                  }
-                >
-                  {item.label}
-                </NavLink>
-                
-              </div>
+              <NavLink
+                key={item.label}
+                to={item.path}
+                className={({ isActive }) =>
+                  `text-sm font-medium ${
+                    isActive
+                      ? "text-brand-purple"
+                      : "text-brand-gray-dark"
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
             ))}
           </nav>
 
-          {/* DESKTOP ICONS */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* ICONS */}
+          <div className="flex items-center gap-4">
+
             {/* SEARCH */}
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-light" />
+            <form onSubmit={handleSearchSubmit} className="relative hidden md:block">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchOpen(true)}
-                className="pl-7 pr-3 py-1 text-sm border rounded focus:ring-2 focus:ring-brand-purple"
+                className="pl-7 pr-3 py-1 text-sm border rounded"
               />
               <SearchDropdown
                 isOpen={isSearchOpen}
@@ -140,15 +168,15 @@ export default function Header() {
                 <User className="w-6 h-6" />
               </button>
             ) : (
-              <div className="relative" ref={profileRef}>
+              <div ref={profileRef} className="relative">
                 <div
                   onClick={() => setIsProfileOpen((v) => !v)}
-                  className="w-9 h-9 rounded-full overflow-hidden bg-brand-purple text-white flex items-center justify-center cursor-pointer"
+                  className="w-9 h-9 rounded-full bg-brand-purple text-white flex items-center justify-center cursor-pointer"
                 >
                   {user?.avatar?.url ? (
                     <img
                       src={user.avatar.url}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover rounded-full"
                     />
                   ) : (
                     <span className="text-sm font-bold">
@@ -188,53 +216,82 @@ export default function Header() {
                 <span className="badge">{cartItems.length}</span>
               )}
             </button>
-          </div>
 
-          {/* MOBILE MENU BUTTON */}
-          <button
-            className="lg:hidden p-2"
-            onClick={() => setIsMenuOpen((v) => !v)}
-          >
-            {isMenuOpen ? <X /> : <Menu />}
-          </button>
+          </div>
         </div>
-
-        {/* MOBILE MENU */}
-        {isMenuOpen && (
-          <div className="lg:hidden py-4 border-t space-y-4">
-            <nav className="flex flex-col gap-3 px-3">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.label}
-                  to={item.path}
-                  onClick={() => setIsMenuOpen(false)}
-                  className="text-sm"
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </nav>
-
-            <div className="flex gap-5 px-3 pt-4 border-t">
-              <button onClick={() => navigate("/wishlist")}>
-                <Heart />
-              </button>
-              {!isAuthenticated ? (
-                <button onClick={() => navigate("/login")}>
-                  <User />
-                </button>
-              ) : (
-                <button onClick={() => navigate("/account")}>
-                  <User />
-                </button>
-              )}
-              <button onClick={() => navigate("/cart")}>
-                <ShoppingCart />
-              </button>
-            </div>
-          </div>
-        )}
       </Container>
+
+      {/* ================= MOBILE DRAWER ================= */}
+      <div className={`fixed inset-0 z-50 ${isMenuOpen ? "visible" : "invisible"}`}>
+        
+        {/* OVERLAY */}
+        <div
+          className={`absolute inset-0 bg-black/40 ${
+            isMenuOpen ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={() => setIsMenuOpen(false)}
+        />
+
+        {/* DRAWER */}
+        <div
+          className={`absolute left-0 top-0 h-full w-72 bg-white shadow-lg transform transition ${
+            isMenuOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <div className="flex justify-between items-center p-4 border-b">
+            <span className="font-semibold">Menu</span>
+            <button onClick={() => setIsMenuOpen(false)}>
+              <X />
+            </button>
+          </div>
+
+          {/* SEARCH */}
+          <form onSubmit={handleSearchSubmit} className="p-4">
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full border p-2 rounded"
+            />
+          </form>
+
+          {/* NAV */}
+          <nav className="flex flex-col gap-4 px-4">
+            {navItems.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => {
+                  navigate(item.path);
+                  setIsMenuOpen(false);
+                }}
+                className="text-left text-gray-700"
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* ACTIONS */}
+          <div className="mt-6 px-4 flex gap-4">
+            <button onClick={() => navigate("/wishlist")}>
+              <Heart />
+            </button>
+
+            <button
+              onClick={() =>
+                navigate(isAuthenticated ? "/account" : "/login")
+              }
+            >
+              <User />
+            </button>
+
+            <button onClick={() => navigate("/cart")}>
+              <ShoppingCart />
+            </button>
+          </div>
+        </div>
+      </div>
     </header>
   );
 }
