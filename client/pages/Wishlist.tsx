@@ -22,7 +22,7 @@ export default function Wishlist() {
 
   const handleAddToCart = (item: any) => {
     addToCart({
-      id: item.productId,
+      productId: item.productId,
       name: item.productTitle,
       price: item.price,
       image: item.image,

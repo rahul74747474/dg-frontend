@@ -66,6 +66,7 @@ export default function Header() {
       await api.post("/auth/logout");
     } catch {}
     localStorage.removeItem("token");
+    localStorage.removeItem("cart");
     setUser(null);
     navigate("/");
   };

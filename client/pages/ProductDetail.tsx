@@ -43,6 +43,10 @@ function ProductDetail() {
   const [comment, setComment] = useState("");
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
 
+  const [pincode, setPincode] = useState("");
+const [serviceability, setServiceability] = useState(null);
+const [checking, setChecking] = useState(false);
+
   /* ----------------------------- FETCH PRODUCT ---------------------------- */
 
   const { data: product } = useQuery({
@@ -158,6 +162,41 @@ const sortedReviews = useMemo(() => {
     }
   };
 
+  const checkServiceability = async () => {
+  if (!pincode || pincode.length !== 6) {
+    toast.error("Enter valid 6-digit pincode");
+    return;
+  }
+
+  try {
+    setChecking(true);
+
+    const res = await api.get(`/shipping/check?pincode=${pincode}`);
+
+    setServiceability(res.data);
+
+  } catch (err) {
+    toast.error("Unable to check serviceability");
+  } finally {
+    setChecking(false);
+  }
+};
+
+  const handleAddToCart = async () => {
+  try {
+    addItem({
+  id: product._id,
+  name: product.name,
+  price: finalPrice,
+  image: product.images[0],
+  quantity,
+});
+    toast.success("Added to cart 🛒");
+
+  } catch (err) {
+    toast.error("Failed to add to cart");
+  }
+};
   /* --------------------------------- UI ----------------------------------- */
 
   return (
@@ -300,10 +339,7 @@ const sortedReviews = useMemo(() => {
 
                     <div className="flex gap-3">
                       <button
-                        onClick={() => {
-                          addItem({ id: product._id, name: product.name, price: finalPrice, image: product.images[0], quantity });
-                          toast.success("Added to cart");
-                        }}
+                        onClick={() => handleAddToCart()}
                         className="flex-1 bg-brand-purple hover:bg-brand-purple-dark text-white text-lg font-bold px-8 py-4 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 group relative overflow-hidden"
                       >
                         <span className="relative z-10 flex items-center gap-2">Add to Cart <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /></span>
@@ -321,6 +357,56 @@ const sortedReviews = useMemo(() => {
                     </div>
                   </div>
                 </div>
+
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mb-6">
+  <h3 className="font-bold text-gray-900 mb-3">
+    Check Delivery Availability
+  </h3>
+
+  <div className="flex gap-3">
+    <input
+      type="text"
+      value={pincode}
+      onChange={(e) => setPincode(e.target.value)}
+      placeholder="Enter Pincode"
+      maxLength={6}
+      className="flex-1 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-purple outline-none"
+    />
+
+    <button
+      onClick={checkServiceability}
+      disabled={checking}
+      className="bg-brand-purple text-white px-5 rounded-xl font-semibold hover:bg-brand-purple-dark transition"
+    >
+      {checking ? "Checking..." : "Check"}
+    </button>
+  </div>
+
+  {/* RESULT */}
+  {serviceability && (
+    <div className="mt-4 text-sm">
+      {serviceability.available ? (
+        (() => {
+          // ✅ Check COD from couriers array
+          const codAvailable = serviceability.couriers?.some(
+            (c) => c.cod === 1
+          );
+
+          return (
+            <div className="text-green-600 font-medium">
+              ✅ Delivery available in{" "}
+              {codAvailable ? "COD & Prepaid" : "Prepaid only"}
+            </div>
+          );
+        })()
+      ) : (
+        <div className="text-red-500 font-medium">
+          ❌ Not serviceable
+        </div>
+      )}
+    </div>
+  )}
+</div>
 
 
               </div>

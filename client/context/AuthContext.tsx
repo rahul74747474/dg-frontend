@@ -18,7 +18,7 @@ export interface User {
   _id: string;
   name: string;
   email: string;
-
+ mobile?: string; 
   avatar?: {
     url?: string;
     public_id?: string;

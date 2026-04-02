@@ -1,8 +1,9 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://dg-backend-nm4d.onrender.com/api",
-  // baseURL: "http://localhost:5000/api",
+  baseURL: "http://localhost:5000/api",
+  // baseURL: "https://dg-backend-nm4d.onrender.com/api",
+  withCredentials: true, // 🔥 ADD THIS
 });
 
 // Attach token automatically
@@ -17,4 +18,3 @@ api.interceptors.request.use((config) => {
 });
 
 export default api;
-

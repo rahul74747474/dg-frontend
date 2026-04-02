@@ -68,6 +68,7 @@ function Shop() {
   } = useQuery({
     queryKey: ["products", selectedCategory, minPrice, maxPrice, search],
     queryFn: async () => {
+      console.log("api calling")
       const res = await api.get("/products", {
         params: {
           category: selectedCategory,

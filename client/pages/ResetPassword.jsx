@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -16,14 +17,52 @@ export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  if (!token) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1">
+          <section className="py-12 md:py-20">
+            <Container>
+              <div className="max-w-md mx-auto text-center">
+                <div className="flex justify-center mb-4">
+                  <AlertCircle size={48} className="text-brand-red" />
+                </div>
+                <h1 className="text-3xl md:text-4xl font-bold text-brand-purple-dark mb-4">
+                  Invalid Reset Link
+                </h1>
+                <p className="text-brand-gray-light mb-6">
+                  The password reset link is missing or invalid. Please request a new one.
+                </p>
+                <button
+                  onClick={() => navigate("/forgot-password")}
+                  className="px-6 py-3 bg-brand-purple text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Request New Link
+                </button>
+              </div>
+            </Container>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
+    // Validation
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -37,11 +76,12 @@ export default function ResetPassword() {
         password,
       });
 
+      toast.success("Password reset successfully!");
       navigate("/login");
     } catch (err) {
-      setError(
-        err?.response?.data?.message || "Invalid or expired token"
-      );
+      const message = err?.response?.data?.message || "Invalid or expired token";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -65,36 +105,49 @@ export default function ResetPassword() {
                 </p>
               </div>
 
+              {/* Error Alert */}
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
+                  <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+
               {/* Form */}
               <form
                 onSubmit={handleSubmit}
                 className="space-y-5 bg-brand-gray-lightest rounded-lg p-6"
               >
-                {error && (
-                  <p className="text-sm text-red-600 text-center">
-                    {error}
-                  </p>
-                )}
-
                 {/* New Password */}
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-brand-gray-dark">
-                    New Password
+                    New Password *
                   </label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-brand-purple"
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setError("");
+                      }}
+                      placeholder="Min. 6 characters"
+                      className={`w-full px-4 py-3 border rounded-lg text-sm focus:outline-none focus:ring-2 transition-all pr-10 ${
+                        error
+                          ? "border-red-500 focus:ring-red-500"
+                          : "border-brand-gray-border focus:ring-brand-purple"
+                      }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray-light hover:text-brand-gray-dark"
                     >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showPassword ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -102,22 +155,42 @@ export default function ResetPassword() {
                 {/* Confirm Password */}
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-brand-gray-dark">
-                    Confirm Password
+                    Confirm Password *
                   </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-brand-purple"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setError("");
+                      }}
+                      placeholder="Re-enter password"
+                      className={`w-full px-4 py-3 border rounded-lg text-sm focus:outline-none focus:ring-2 transition-all pr-10 ${
+                        error
+                          ? "border-red-500 focus:ring-red-500"
+                          : "border-brand-gray-border focus:ring-brand-purple"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray-light hover:text-brand-gray-dark"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Submit */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full px-6 py-3 bg-brand-purple text-white font-semibold rounded-lg flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="w-full px-6 py-3 bg-brand-purple text-white font-semibold rounded-lg flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-60 transition-opacity"
                 >
                   {loading ? "Updating..." : "Reset Password"}
                   <ArrowRight size={18} />

@@ -5,29 +5,17 @@ import Footer from "@/components/Footer";
 import Container from "@/components/ui/container";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
+import { useState,useEffect} from "react";
+import api from "@/api/axios";
 
 export default function Cart() {
   const navigate = useNavigate();
-  const {
-    items: cartItems,
-    removeItem,
-    updateQuantity,
-    total,
-  } = useCart();
+const { items, removeItem, updateQuantity, total } = useCart();
 
   /* ---------- HANDLERS ---------- */
 
-  const handleRemoveItem = (id: string) => {
-    removeItem(id);
-    toast.success("Item removed from cart");
-  };
-
-  const handleQuantityChange = (id: string, quantity: number) => {
-    updateQuantity(id, quantity);
-  };
-
   const handleCheckout = () => {
-    if (cartItems.length === 0) {
+    if (items.length === 0) {
       toast.error("Your cart is empty");
       return;
     }
@@ -41,7 +29,7 @@ export default function Cart() {
   const delivery = subtotal > 500 ? 0 : 50; // realistic INR logic
   const grandTotal = subtotal - discount + delivery;
 
-  const isEmpty = cartItems.length === 0;
+  const isEmpty = items.length === 0;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -83,7 +71,7 @@ export default function Cart() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* ITEMS */}
                 <div className="lg:col-span-2 space-y-4">
-                  {cartItems.map((item) => (
+                  {items.map((item) => (
                     <div
                       key={item.id}
                       className="flex gap-4 p-4 border rounded-lg"
@@ -103,12 +91,7 @@ export default function Cart() {
                         {/* QUANTITY */}
                         <div className="mt-2 flex items-center gap-2 border rounded w-fit px-2">
                           <button
-                            onClick={() =>
-                              handleQuantityChange(
-                                item.id,
-                                item.quantity - 1
-                              )
-                            }
+                           onClick={() => updateQuantity(item.id, "decrease")}
                           >
                             <Minus size={16} />
                           </button>
@@ -118,12 +101,7 @@ export default function Cart() {
                           </span>
 
                           <button
-                            onClick={() =>
-                              handleQuantityChange(
-                                item.id,
-                                item.quantity + 1
-                              )
-                            }
+                           onClick={() => updateQuantity(item.id, "increase")}
                           >
                             <Plus size={16} />
                           </button>
@@ -131,7 +109,7 @@ export default function Cart() {
                       </div>
 
                       <button
-                        onClick={() => handleRemoveItem(item.id)}
+                      onClick={() => removeItem(item.id)}
                         className="text-red-500 hover:bg-red-50 p-2 rounded"
                       >
                         <X size={20} />

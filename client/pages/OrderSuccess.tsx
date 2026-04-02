@@ -1,31 +1,77 @@
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { CheckCircle, Package, Truck, Clock } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Container from "@/components/ui/container";
 import { useCart } from "@/context/CartContext";
+import api from "@/api/axios";
 
 export default function OrderSuccess() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { clearCart } = useCart();
+  const [orderData, setOrderData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Clear cart when order is confirmed (run only once on mount)
   useEffect(() => {
-    clearCart();
-  }, []);
+    const fetchOrder = async () => {
+      try {
+        const orderId = location.state?.orderId;
+        if (orderId) {
+       const { data } = await api.get(`/orders/${orderId}`);
 
-  // Placeholder data - in a real app, this would come from order state
-  const orderData = {
-    orderNumber: "ORD-" + Math.random().toString(36).substring(2, 11).toUpperCase(),
-    date: new Date().toLocaleDateString("en-IN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }),
-    estimatedDelivery: "3-5 business days",
-    total: 2439.98,
-  };
+console.log("🔥 FULL RESPONSE:", data);
+console.log("📦 ORDER:", data.order);
+console.log("🚚 SHIPPING:", data.order?.shipping);
+
+setOrderData({
+  orderNumber: data.order._id,
+  date: new Date(data.order.createdAt).toLocaleDateString("en-IN"),
+  total: data.order.pricing?.grandTotal || 0,
+
+  shipmentId: data.order.shipping?.shipmentId,
+  awbCode: data.order.shipping?.awbCode,
+  courier: data.order.shipping?.courierName,
+});
+        } else {
+          // Fallback to placeholder data
+          setOrderData({
+            orderNumber: "ORD-" + Math.random().toString(36).substring(2, 11).toUpperCase(),
+            date: new Date().toLocaleDateString("en-IN", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            estimatedDelivery: "3-5 business days",
+            total: 0,
+          });
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrder();
+    clearCart();
+  }, [location.state]);
+
+  if (isLoading || !orderData) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <Container>
+            <div className="text-center py-16">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-purple"></div>
+              <p className="mt-4 text-brand-gray-light">Loading order details...</p>
+            </div>
+          </Container>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -50,13 +96,31 @@ export default function OrderSuccess() {
 
               {/* Order Number */}
               <div className="bg-white rounded-lg p-6 border border-brand-green w-full">
-                <p className="text-sm text-brand-gray-light mb-1">Order Number</p>
-                <p className="text-2xl font-bold text-brand-purple font-mono">
-                  {orderData.orderNumber}
-                </p>
-                <p className="text-sm text-brand-gray-light mt-3">
-                  Placed on {orderData.date}
-                </p>
+              {orderData.shipmentId && (
+  <div className="bg-blue-50 border rounded-lg p-4 mt-4">
+    <p className="text-sm text-gray-600">Shipping Details</p>
+
+    <p className="text-sm">
+      Shipment ID:{" "}
+      <span className="font-mono">{orderData.shipmentId}</span>
+    </p>
+
+    {orderData.awbCode ? (
+      <>
+        <p className="text-sm mt-2">
+          Courier: {orderData.courier}
+        </p>
+        <p className="font-mono text-sm">
+          AWB: {orderData.awbCode}
+        </p>
+      </>
+    ) : (
+      <p className="text-xs text-orange-600 mt-2">
+        Tracking will be available soon 🚚
+      </p>
+    )}
+  </div>
+)}
               </div>
             </div>
           </Container>
