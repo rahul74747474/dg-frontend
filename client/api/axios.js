@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
-  // baseURL: "https://dg-backend-nm4d.onrender.com/api",
+  //baseURL: "http://localhost:5000/api",
+   baseURL: "https://dg-backend-nm4d.onrender.com/api",
   withCredentials: true, // 🔥 ADD THIS
 });
 
