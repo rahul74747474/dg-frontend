@@ -1,6 +1,17 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Container from "@/components/ui/container";
+import {
+  SparklesIcon,
+  EyeIcon,
+  CurrencyRupeeIcon,
+  MagnifyingGlassIcon,
+  TruckIcon,
+  CheckIcon,
+  HeartIcon,
+  ArrowPathIcon,
+  ShieldCheckIcon,
+} from "@heroicons/react/24/outline";
 
 export default function About() {
   return (
@@ -44,11 +55,10 @@ export default function About() {
                 wellness products directly from farms to families.
               </p>
             </div>
-            <div className="bg-brand-gray-lightest rounded-lg aspect-square flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-6xl mb-4">🌱</div>
-                <p className="text-brand-gray font-semibold">Our Journey to Organic</p>
-              </div>
+            <div className="bg-white rounded-lg aspect-square flex items-center justify-center">
+             
+                  <img src="https://i.ibb.co/RksxY8v7/Whats-App-Image-2026-03-08-at-17-21-43.webp"/>
+              
             </div>
           </section>
         </Container>
@@ -58,7 +68,9 @@ export default function About() {
           <Container>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="bg-white p-8 rounded-lg border border-brand-gray-border">
-                <div className="text-4xl mb-4">🎯</div>
+                <div className="w-20 h-20 mx-auto flex items-center justify-center rounded-full bg-brand-green-lighter">
+                  <ShieldCheckIcon className="w-10 h-10 text-brand-primary" />
+                </div>
                 <h3 className="text-2xl font-bold text-brand-purple-dark mb-4">
                   Our Mission
                 </h3>
@@ -69,7 +81,9 @@ export default function About() {
                 </p>
               </div>
               <div className="bg-white p-8 rounded-lg border border-brand-gray-border">
-                <div className="text-4xl mb-4">👁️</div>
+                <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center rounded-full bg-brand-green-lighter">
+                  <EyeIcon className="w-10 h-10 text-brand-primary" />
+                </div>
                 <h3 className="text-2xl font-bold text-brand-purple-dark mb-4">
                   Our Vision
                 </h3>
@@ -92,8 +106,9 @@ export default function About() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brand-green-lighter flex items-center justify-center text-2xl">
-                  💰
-                </div>
+                
+                    <CurrencyRupeeIcon className="w-8 h-8 text-brand-green" />
+                  </div> 
                 <h4 className="font-bold text-brand-blue-dark mb-2">
                   Affordability Crisis
                 </h4>
@@ -104,7 +119,9 @@ export default function About() {
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brand-green-lighter flex items-center justify-center text-2xl">
-                  🔍
+                  
+                    <MagnifyingGlassIcon className="w-8 h-8 text-brand-green" />
+                  
                 </div>
                 <h4 className="font-bold text-brand-blue-dark mb-2">
                   Trust Issues
@@ -116,7 +133,9 @@ export default function About() {
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brand-green-lighter flex items-center justify-center text-2xl">
-                  🚚
+                 
+                    <TruckIcon className="w-8 h-8 text-brand-green" />
+                
                 </div>
                 <h4 className="font-bold text-brand-blue-dark mb-2">
                   Accessibility Gap
@@ -140,7 +159,7 @@ export default function About() {
               <div className="flex gap-4">
                 <div className="flex-shrink-0">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-green text-white text-xl">
-                    ✓
+                    <CheckIcon className="w-6 h-6" />
                   </div>
                 </div>
                 <div>
@@ -156,7 +175,7 @@ export default function About() {
               <div className="flex gap-4">
                 <div className="flex-shrink-0">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-green text-white text-xl">
-                    ✓
+                    <CheckIcon className="w-6 h-6" />
                   </div>
                 </div>
                 <div>
@@ -172,7 +191,7 @@ export default function About() {
               <div className="flex gap-4">
                 <div className="flex-shrink-0">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-green text-white text-xl">
-                    ✓
+                    <CheckIcon className="w-6 h-6" />
                   </div>
                 </div>
                 <div>
@@ -188,7 +207,7 @@ export default function About() {
               <div className="flex gap-4">
                 <div className="flex-shrink-0">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-green text-white text-xl">
-                    ✓
+                    <CheckIcon className="w-6 h-6" />
                   </div>
                 </div>
                 <div>
@@ -213,28 +232,28 @@ export default function About() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="bg-white p-6 rounded-lg border border-brand-gray-border text-center">
-                <div className="text-4xl mb-3">🤝</div>
+                <div className="text-4xl mb-3"><div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center rounded-full bg-brand-green-lighter"><ArrowPathIcon className="w-8 h-8 text-brand-primary" /></div></div>
                 <h4 className="font-bold text-brand-blue-dark mb-2">Transparency</h4>
                 <p className="text-sm text-brand-gray-light">
                   We openly share our sourcing, testing, and production processes.
                 </p>
               </div>
               <div className="bg-white p-6 rounded-lg border border-brand-gray-border text-center">
-                <div className="text-4xl mb-3">💎</div>
+                <div className="text-4xl mb-3"><div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center rounded-full bg-brand-green-lighter"><ShieldCheckIcon className="w-8 h-8 text-brand-primary" /></div></div>
                 <h4 className="font-bold text-brand-blue-dark mb-2">Quality</h4>
                 <p className="text-sm text-brand-gray-light">
                   We never compromise on quality, even if it means higher costs.
                 </p>
               </div>
               <div className="bg-white p-6 rounded-lg border border-brand-gray-border text-center">
-                <div className="text-4xl mb-3">♻️</div>
+                <div className="text-4xl mb-3"><div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center rounded-full bg-brand-green-lighter"><ArrowPathIcon className="w-8 h-8 text-brand-primary" /></div></div>
                 <h4 className="font-bold text-brand-blue-dark mb-2">Sustainability</h4>
                 <p className="text-sm text-brand-gray-light">
                   We promote eco-friendly practices throughout our supply chain.
                 </p>
               </div>
               <div className="bg-white p-6 rounded-lg border border-brand-gray-border text-center">
-                <div className="text-4xl mb-3">❤️</div>
+                <div className="text-4xl mb-3"><div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center rounded-full bg-brand-green-lighter"><HeartIcon className="w-8 h-8 text-brand-primary" /></div></div>
                 <h4 className="font-bold text-brand-blue-dark mb-2">Care</h4>
                 <p className="text-sm text-brand-gray-light">
                   Your health and satisfaction are at the heart of everything we do.

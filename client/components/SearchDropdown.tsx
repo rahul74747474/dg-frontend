@@ -1,16 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../api/axios";
 
-const trendingSearches = [
-  "Roasted Makhana",
-  "Organic Makhana",
-  "Cheese & Herbs",
-  "Protein Snacks",
-  "Healthy Snacks",
-  "Weight Loss Foods",
-  "Gluten-Free Snacks",
-  "Honey Roasted",
-];
 
 interface SearchDropdownProps {
   isOpen: boolean;
@@ -27,44 +18,91 @@ export default function SearchDropdown({
 }: SearchDropdownProps) {
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const [trendingProducts, setTrendingProducts] = useState<any[]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Filter trending searches based on query
-  const filteredSearches = searchQuery.trim()
-    ? trendingSearches.filter((item) =>
-        item.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : trendingSearches;
+  /* ---------------- API SEARCH ---------------- */
 
-  // Handle keyboard navigation
+  useEffect(() => {
+  const fetchTrending = async () => {
+    try {
+      const res = await api.get("/products"); // your all products API
+      const products = res.data.products || [];
+
+      // pick any 3 products
+      setTrendingProducts(products.slice(0, 3));
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  fetchTrending();
+}, []);
+
+
+  useEffect(() => {
+    const delay = setTimeout(async () => {
+      if (!searchQuery.trim()) {
+        setResults([]);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const res = await api.get(`/products/search?q=${searchQuery}`);
+        setResults(res.data.products || []);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delay);
+  }, [searchQuery]);
+
+  /* ---------------- KEYBOARD NAV ---------------- */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
+
+     const list = results.length > 0 ? results : trendingProducts;
 
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
           setHighlightedIndex((prev) =>
-            prev < filteredSearches.length - 1 ? prev + 1 : prev
+            prev < list.length - 1 ? prev + 1 : prev
           );
           break;
+
         case "ArrowUp":
           e.preventDefault();
           setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : -1));
           break;
+
         case "Enter":
           e.preventDefault();
+
           if (highlightedIndex >= 0) {
-            handleSelectSearch(filteredSearches[highlightedIndex]);
+            if (results.length > 0) {
+              const item = results[highlightedIndex];
+              navigate(`/product/${item.slug}`);
+            } else {
+             const item = trendingProducts[highlightedIndex];
+navigate(`/product/${item.slug}`);
+onClose();
+            }
           } else if (searchQuery.trim()) {
             handleSelectSearch(searchQuery);
           }
           break;
+
         case "Escape":
-          e.preventDefault();
           onClose();
-          break;
-        default:
           break;
       }
     };
@@ -76,9 +114,9 @@ export default function SearchDropdown({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, highlightedIndex, filteredSearches, searchQuery, onClose]);
+  }, [isOpen, highlightedIndex, results, searchQuery]);
 
-  // Close dropdown on outside click
+  /* ---------------- OUTSIDE CLICK ---------------- */
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -96,7 +134,7 @@ export default function SearchDropdown({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   const handleSelectSearch = (query: string) => {
     onSelectSearch(query);
@@ -111,39 +149,94 @@ export default function SearchDropdown({
       ref={dropdownRef}
       className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50"
     >
-      {filteredSearches.length > 0 ? (
-        <div className="py-2">
-          <div className="px-4 py-2">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Trending Searches
-            </p>
-          </div>
-          <ul className="max-h-64 overflow-y-auto">
-            {filteredSearches.map((search, index) => (
-              <li key={search}>
-                <button
-                  onClick={() => handleSelectSearch(search)}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                  className={`w-full text-left px-4 py-3 text-sm transition-colors ${
-                    highlightedIndex === index
-                      ? "bg-brand-purple bg-opacity-10 text-brand-purple"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <span className="text-gray-400 mr-2">🔍</span>
-                  {search}
-                </button>
-              </li>
-            ))}
-          </ul>
+      {/* LOADING */}
+      {loading && (
+        <div className="px-4 py-4 text-sm text-gray-500">
+          Searching...
         </div>
-      ) : (
+      )}
+
+      {/* RESULTS */}
+      {!loading && results.length > 0 && (
+        <ul className="max-h-64 overflow-y-auto py-2">
+          {results.map((item, index) => (
+            <li key={item._id}>
+              <button
+                onClick={() => {
+                  navigate(`/product/${item.slug}`);
+                  onClose();
+                }}
+                onMouseEnter={() => setHighlightedIndex(index)}
+                className={`w-full text-left px-4 py-3 transition ${
+                  highlightedIndex === index
+                    ? "bg-brand-purple bg-opacity-10"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <img
+                    src={item.images?.[0]}
+                    className="w-10 h-10 rounded object-cover"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">
+                      {item.name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      ₹{item.price}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* TRENDING */}
+      {!loading && results.length === 0 && !searchQuery && (
+        <div className="py-2">
+          <p className="px-4 text-xs text-gray-500 uppercase">
+            Trending
+          </p>
+       {trendingProducts.map((item, index) => (
+  <button
+    key={item._id}
+    onClick={() => {
+      navigate(`/product/${item.slug}`);
+      onClose();
+    }}
+    onMouseEnter={() => setHighlightedIndex(index)}
+    className={`w-full text-left px-4 py-3 transition ${
+      highlightedIndex === index
+        ? "bg-brand-purple bg-opacity-10"
+        : "hover:bg-gray-100"
+    }`}
+  >
+    <div className="flex items-center gap-3">
+      <img
+        src={item.images?.[0]}
+        className="w-10 h-10 rounded object-cover"
+      />
+      <div>
+        <p className="text-sm font-medium text-gray-800">
+          {item.name}
+        </p>
+        <p className="text-xs text-gray-500">
+          ₹{item.price}
+        </p>
+      </div>
+    </div>
+  </button>
+))}
+        </div>
+      )}
+
+      {/* NO RESULTS */}
+      {!loading && results.length === 0 && searchQuery && (
         <div className="px-4 py-6 text-center">
           <p className="text-sm text-gray-500">
-            No results for "{searchQuery}"
-          </p>
-          <p className="text-xs text-gray-400 mt-2">
-            Try searching for makhana, snacks, or health products
+            No products found for "{searchQuery}"
           </p>
         </div>
       )}

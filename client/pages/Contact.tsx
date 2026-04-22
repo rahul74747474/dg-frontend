@@ -1,8 +1,11 @@
 import { FormEvent, useState } from "react";
 import { Mail, MapPin, Phone, Clock } from "lucide-react";
+import { Toaster, toast } from "sonner";
+
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Container from "@/components/ui/container";
+import api from "@/api/axios";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -11,8 +14,11 @@ export default function Contact() {
     subject: "",
     message: "",
   });
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  /* ------------------------- HANDLE INPUT CHANGE ------------------------- */
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -20,20 +26,50 @@ export default function Contact() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  /* --------------------------- HANDLE SUBMIT ----------------------------- */
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Placeholder for API call
-    console.log("Form submitted:", formData);
-    setIsSubmitted(true);
-    setFormData({ name: "", email: "", subject: "", message: "" });
-    setTimeout(() => setIsSubmitted(false), 5000);
+
+    try {
+      setLoading(true);
+
+      const res = await api.post("/contact/contact", formData);
+
+      if (res.data.success) {
+        setIsSubmitted(true);
+
+        toast.success("Message sent successfully 🚀", {
+          description: "We’ll get back to you within 24 hours",
+        });
+
+        setFormData({
+          name: "",
+          email: "",
+          subject: "",
+          message: "",
+        });
+
+        setTimeout(() => setIsSubmitted(false), 5000);
+      }
+    } catch (err: any) {
+      console.error(err);
+
+      toast.error("Failed to send message ❌", {
+        description: "Please try again later",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
+  /* ------------------------------- UI ----------------------------------- */
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+      <Toaster richColors position="top-right" />
+
       <main className="flex-1">
-        {/* Hero Section */}
+        {/* ================= HERO ================= */}
         <section className="bg-brand-peach-bg">
           <Container>
             <div className="py-12 text-center">
@@ -41,196 +77,127 @@ export default function Contact() {
                 Get in Touch
               </h1>
               <p className="text-brand-gray max-w-2xl mx-auto">
-                Have a question or feedback? We'd love to hear from you. Fill out the form below
-                or reach us through any of our contact channels.
+                Have a question or feedback? We'd love to hear from you.
               </p>
             </div>
           </Container>
         </section>
 
-        {/* Contact Form & Info */}
+        {/* ================= FORM + INFO ================= */}
         <Container>
           <div className="py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Contact Form */}
+            
+            {/* ---------------- FORM ---------------- */}
             <div className="lg:col-span-2">
-              <div className="bg-white border border-brand-gray-border rounded-lg p-8">
+              <div className="bg-white border border-brand-gray-border rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-300">
                 <h2 className="text-2xl font-bold text-brand-purple-dark mb-6">
                   Send us a Message
                 </h2>
 
+                {/* SUCCESS BOX */}
                 {isSubmitted && (
-                  <div className="mb-6 p-4 bg-green-50 border border-brand-green rounded-lg">
+                  <div className="mb-6 p-4 bg-green-50 border border-brand-green rounded-lg animate-fade-in">
                     <p className="text-sm text-brand-green font-semibold">
-                      ✓ Thank you for your message! We'll get back to you soon.
+                      ✓ Message sent successfully!
                     </p>
                   </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-brand-blue-dark mb-2">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="John Doe"
-                      required
-                      className="w-full px-4 py-3 border border-brand-gray-border rounded-md text-brand-gray-dark placeholder-brand-gray-light focus:outline-none focus:ring-2 focus:ring-brand-purple"
-                    />
-                  </div>
+                  
+                  {/* NAME */}
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Full Name"
+                    required
+                    className="w-full px-4 py-3 border border-brand-gray-border rounded-md 
+                    focus:ring-2 focus:ring-brand-purple/40 outline-none"
+                  />
 
-                  <div>
-                    <label className="block text-sm font-semibold text-brand-blue-dark mb-2">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="john@example.com"
-                      required
-                      className="w-full px-4 py-3 border border-brand-gray-border rounded-md text-brand-gray-dark placeholder-brand-gray-light focus:outline-none focus:ring-2 focus:ring-brand-purple"
-                    />
-                  </div>
+                  {/* EMAIL */}
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Email Address"
+                    required
+                    className="w-full px-4 py-3 border border-brand-gray-border rounded-md 
+                    focus:ring-2 focus:ring-brand-purple/40 outline-none"
+                  />
 
-                  <div>
-                    <label className="block text-sm font-semibold text-brand-blue-dark mb-2">
-                      Subject
-                    </label>
-                    <select
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border border-brand-gray-border rounded-md text-brand-gray-dark focus:outline-none focus:ring-2 focus:ring-brand-purple"
-                    >
-                      <option value="">Select a subject</option>
-                      <option value="product-inquiry">Product Inquiry</option>
-                      <option value="order-issue">Order Issue</option>
-                      <option value="feedback">Feedback</option>
-                      <option value="partnership">Partnership</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
+                  {/* SUBJECT */}
+                  <select
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-brand-gray-border rounded-md 
+                    focus:ring-2 focus:ring-brand-purple/40 outline-none"
+                  >
+                    <option value="">Select Subject</option>
+                    <option value="product-inquiry">Product Inquiry</option>
+                    <option value="order-issue">Order Issue</option>
+                    <option value="feedback">Feedback</option>
+                    <option value="partnership">Partnership</option>
+                    <option value="other">Other</option>
+                  </select>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-brand-blue-dark mb-2">
-                      Message
-                    </label>
-                    <textarea
-                      name="message"
-                      value={formData.message}
-                      onChange={handleChange}
-                      placeholder="Tell us how we can help..."
-                      rows={5}
-                      required
-                      className="w-full px-4 py-3 border border-brand-gray-border rounded-md text-brand-gray-dark placeholder-brand-gray-light focus:outline-none focus:ring-2 focus:ring-brand-purple resize-none"
-                    ></textarea>
-                  </div>
+                  {/* MESSAGE */}
+                  <textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    placeholder="Your message..."
+                    rows={5}
+                    required
+                    className="w-full px-4 py-3 border border-brand-gray-border rounded-md 
+                    focus:ring-2 focus:ring-brand-purple/40 outline-none resize-none"
+                  />
 
+                  {/* SUBMIT BUTTON */}
                   <button
                     type="submit"
-                    className="w-full py-3 px-4 bg-brand-purple text-white font-semibold rounded-md hover:opacity-90 transition-opacity"
+                    disabled={loading}
+                    className="w-full py-3 px-4 bg-brand-purple text-white font-semibold rounded-md 
+                    transition-all duration-300 hover:opacity-90 
+                    disabled:opacity-60 disabled:cursor-not-allowed
+                    flex items-center justify-center gap-2 group"
                   >
-                    Send Message
+                    {loading ? (
+                      <>
+                        <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        Send Message
+                        <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      </>
+                    )}
                   </button>
                 </form>
-
-                <p className="text-xs text-brand-gray-light text-center mt-4">
-                  We typically respond within 24 hours
-                </p>
               </div>
             </div>
 
-            {/* Contact Info */}
-            <div className="lg:col-span-1">
+            {/* ---------------- INFO ---------------- */}
+            <div>
               <h2 className="text-2xl font-bold text-brand-purple-dark mb-6">
-                Contact Information
+                Contact Info
               </h2>
 
               <div className="space-y-6">
-                {/* Email */}
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-full bg-brand-green-lighter flex items-center justify-center flex-shrink-0">
-                    <Mail size={20} className="text-brand-green" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-brand-blue-dark mb-1">
-                      Email
-                    </h4>
-                    <a
-                      href="mailto:support@desiiglobal.com"
-                      className="text-sm text-brand-purple hover:underline"
-                    >
-                      support@desiiglobal.com
-                    </a>
-                  </div>
-                </div>
+                
+                <Info icon={<Mail />} title="Email" text="support@desiiglobal.com" />
+                <Info icon={<Phone />} title="Phone" text="+91 98765 43210" />
+                <Info icon={<MapPin />} title="Address" text="Mumbai, India" />
+                <Info icon={<Clock />} title="Hours" text="Mon - Sat, 10AM - 6PM" />
 
-                {/* Phone */}
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-full bg-brand-green-lighter flex items-center justify-center flex-shrink-0">
-                    <Phone size={20} className="text-brand-green" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-brand-blue-dark mb-1">
-                      Phone
-                    </h4>
-                    <a
-                      href="tel:+919876543210"
-                      className="text-sm text-brand-purple hover:underline"
-                    >
-                      +91 98765 43210
-                    </a>
-                  </div>
-                </div>
-
-                {/* Address */}
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-full bg-brand-green-lighter flex items-center justify-center flex-shrink-0">
-                    <MapPin size={20} className="text-brand-green" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-brand-blue-dark mb-1">
-                      Address
-                    </h4>
-                    <address className="text-sm text-brand-gray-light not-italic">
-                      DesiiGlobal Headquarters
-                      <br />
-                      123 Wellness Street
-                      <br />
-                      Mumbai, Maharashtra 400001
-                      <br />
-                      India
-                    </address>
-                  </div>
-                </div>
-
-                {/* Hours */}
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-full bg-brand-green-lighter flex items-center justify-center flex-shrink-0">
-                    <Clock size={20} className="text-brand-green" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-brand-blue-dark mb-1">
-                      Business Hours
-                    </h4>
-                    <p className="text-sm text-brand-gray-light">
-                      Monday - Friday: 10:00 AM - 6:00 PM
-                      <br />
-                      Saturday: 10:00 AM - 4:00 PM
-                      <br />
-                      Sunday: Closed
-                    </p>
-                  </div>
-                </div>
               </div>
-
-              {/* Social Links Placeholder */}
+                 {/* Social Links Placeholder */}
               <div className="mt-8 pt-8 border-t border-brand-gray-border">
                 <h4 className="font-semibold text-brand-blue-dark mb-4">
                   Follow Us
@@ -260,8 +227,7 @@ export default function Contact() {
           </div>
         </Container>
 
-        {/* Map Placeholder */}
-        <section className="bg-brand-gray-lightest">
+         <section className="bg-brand-gray-lightest">
           <Container>
             <div className="py-12">
               <h2 className="text-2xl font-bold text-brand-purple-dark mb-6 text-center">
@@ -335,8 +301,27 @@ export default function Contact() {
             </div>
           </section>
         </Container>
+
+        
       </main>
+
       <Footer />
+    </div>
+  );
+}
+
+/* ---------------- SMALL REUSABLE COMPONENT ---------------- */
+
+function Info({ icon, title, text }: any) {
+  return (
+    <div className="flex gap-4 items-start">
+      <div className="w-12 h-12 rounded-full bg-brand-green-lighter flex items-center justify-center">
+        {icon}
+      </div>
+      <div>
+        <h4 className="font-semibold text-brand-blue-dark">{title}</h4>
+        <p className="text-sm text-brand-gray-light">{text}</p>
+      </div>
     </div>
   );
 }

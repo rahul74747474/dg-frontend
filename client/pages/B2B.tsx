@@ -3,6 +3,15 @@ import { ArrowRight, CheckCircle } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Container from "@/components/ui/container";
+import api from "@/api/axios"
+import {
+  CurrencyRupeeIcon,
+  TruckIcon,
+  UserGroupIcon,
+  CubeIcon,
+  CheckBadgeIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
 
 interface B2BForm {
   companyName: string;
@@ -75,21 +84,29 @@ export default function B2B() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (!validateForm()) return;
+  if (!validateForm()) return;
 
+  try {
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+
+    const res = await api.post("/b2b/b2b", formData);
+
+    if (res.data.success) {
       setSubmitSuccess(true);
       setFormData(initialForm);
-      // Reset success message after 5 seconds
+
       setTimeout(() => setSubmitSuccess(false), 5000);
-    }, 1500);
-  };
+    }
+  } catch (err: any) {
+    console.error(err);
+    alert(err?.response?.data?.message || "Something went wrong");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -115,53 +132,60 @@ export default function B2B() {
 
         {/* Benefits Section */}
         <section className="py-12 md:py-16">
-          <Container>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-              {[
-                {
-                  icon: "💰",
-                  title: "Special Pricing",
-                  description: "Competitive bulk rates tailored to your order volume",
-                },
-                {
-                  icon: "🚚",
-                  title: "Flexible Delivery",
-                  description: "Custom delivery schedules and direct-to-destination shipping",
-                },
-                {
-                  icon: "👥",
-                  title: "Dedicated Support",
-                  description: "Personal account manager for seamless communication",
-                },
-                {
-                  icon: "📦",
-                  title: "Customization",
-                  description: "Custom packaging and labeling options available",
-                },
-                {
-                  icon: "✓",
-                  title: "Quality Assured",
-                  description: "100% premium products with guaranteed freshness",
-                },
-                {
-                  icon: "⏱️",
-                  title: "Quick Turnaround",
-                  description: "Fast processing and dispatch for urgent orders",
-                },
-              ].map((benefit, index) => (
-                <div
-                  key={index}
-                  className="p-6 rounded-lg border border-brand-gray-border hover:shadow-md transition-shadow"
-                >
-                  <div className="text-4xl mb-3">{benefit.icon}</div>
-                  <h3 className="font-bold text-brand-gray-dark mb-2">{benefit.title}</h3>
-                  <p className="text-sm text-brand-gray-light">{benefit.description}</p>
-                </div>
-              ))}
-            </div>
-          </Container>
-        </section>
+  <Container>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+      {[
+        {
+          icon: CurrencyRupeeIcon,
+          title: "Special Pricing",
+          description: "Competitive bulk rates tailored to your order volume",
+        },
+        {
+          icon: TruckIcon,
+          title: "Flexible Delivery",
+          description: "Custom delivery schedules and direct-to-destination shipping",
+        },
+        {
+          icon: UserGroupIcon,
+          title: "Dedicated Support",
+          description: "Personal account manager for seamless communication",
+        },
+        {
+          icon: CubeIcon,
+          title: "Customization",
+          description: "Custom packaging and labeling options available",
+        },
+        {
+          icon: CheckBadgeIcon,
+          title: "Quality Assured",
+          description: "100% premium products with guaranteed freshness",
+        },
+        {
+          icon: ClockIcon,
+          title: "Quick Turnaround",
+          description: "Fast processing and dispatch for urgent orders",
+        },
+      ].map((benefit, index) => {
+        const Icon = benefit.icon;
 
+        return (
+          <div
+            key={index}
+            className="p-6 rounded-lg border border-brand-gray-border hover:shadow-md transition-shadow"
+          >
+            <Icon className="w-10 h-10 text-brand-primary mb-3" />
+            <h3 className="font-bold text-brand-gray-dark mb-2">
+              {benefit.title}
+            </h3>
+            <p className="text-sm text-brand-gray-light">
+              {benefit.description}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  </Container>
+</section>
         {/* Enquiry Form Section */}
         <section className="py-12 md:py-20 bg-brand-gray-lightest">
           <Container>
@@ -431,4 +455,4 @@ export default function B2B() {
       <Footer />
     </div>
   );
-}
+}  

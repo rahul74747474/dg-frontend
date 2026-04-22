@@ -3,6 +3,7 @@ import { Search, CheckCircle, Clock } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Container from "@/components/ui/container";
+import api from "../api/axios"
 
 interface OrderStatus {
   status: "packed" | "shipped" | "delivered";
@@ -13,40 +14,54 @@ interface OrderStatus {
 
 export default function TrackOrder() {
   const [orderId, setOrderId] = useState("");
-  const [email, setEmail] = useState("");
   const [isSearched, setIsSearched] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [orderData, setOrderData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const mapStatus = (status: string) => {
+    if (!status) return "placed";
 
-  const handleSearch = (e: React.FormEvent) => {
+    const s = status.toLowerCase();
+
+    if (s.includes("picked") || s.includes("packed")) return "packed";
+    if (s.includes("transit") || s.includes("shipped")) return "shipped";
+    if (s.includes("delivered")) return "delivered";
+
+    return "placed";
+  };
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (orderId.trim() && email.trim()) {
-      setIsSearched(true);
-      setShowError(false);
-    } else {
+
+    if (!orderId.trim()) {
       setShowError(true);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      setShowError(false);
+      setOrderData(null);
+      const res = await api.get(`/track/${orderId}`);
+      // NOTE: no /api if already in baseURL
+
+      setOrderData(res.data);
+      setIsSearched(true);
+
+    } catch (err: any) {
+      console.log(err);
+
+      setError(
+        err?.response?.data?.message || "Order not found"
+      );
+      setOrderData(null);
+      setIsSearched(true);
+
+    } finally {
+      setLoading(false);
     }
   };
-
-  const mockOrderStatus: OrderStatus[] = [
-    {
-      status: "packed",
-      date: "2025-01-15",
-      location: "DesiiGlobal Warehouse",
-      completed: true,
-    },
-    {
-      status: "shipped",
-      date: "2025-01-16",
-      location: "In Transit",
-      completed: true,
-    },
-    {
-      status: "delivered",
-      date: "2025-01-17",
-      location: "Expected Delivery",
-      completed: false,
-    },
-  ];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -60,7 +75,7 @@ export default function TrackOrder() {
                 Track Your Order
               </h1>
               <p className="text-brand-gray max-w-2xl mx-auto">
-                Enter your order ID and email to track the status of your delivery
+                Enter your order ID to track the status of your delivery
               </p>
             </div>
           </Container>
@@ -86,21 +101,6 @@ export default function TrackOrder() {
                     className="w-full px-4 py-3 border border-brand-gray-border rounded-md text-brand-gray-dark placeholder-brand-gray-light focus:outline-none focus:ring-2 focus:ring-brand-purple"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-brand-blue-dark mb-2">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setShowError(false);
-                    }}
-                    className="w-full px-4 py-3 border border-brand-gray-border rounded-md text-brand-gray-dark placeholder-brand-gray-light focus:outline-none focus:ring-2 focus:ring-brand-purple"
-                  />
-                </div>
               </div>
 
               {showError && (
@@ -118,9 +118,14 @@ export default function TrackOrder() {
                 <Search size={18} /> Track Order
               </button>
             </form>
+            {loading && (
+              <div className="text-center py-10">
+                <p className="text-brand-gray">Tracking your order...</p>
+              </div>
+            )}
 
             {/* Order Status (shown after search) */}
-            {isSearched && (
+            {isSearched && orderData && (
               <div className="mt-12 space-y-8">
                 {/* Order Summary */}
                 <div className="bg-white border border-brand-gray-border rounded-lg p-6">
@@ -134,16 +139,24 @@ export default function TrackOrder() {
                     </div>
                     <div>
                       <p className="text-xs text-brand-gray-light mb-1">Order Date</p>
-                      <p className="font-semibold text-brand-blue-dark">15 Jan 2025</p>
+                      <p className="font-semibold text-brand-blue-dark">
+                        {orderData?.orderInfo?.orderDate
+                          ? new Date(orderData.orderInfo.orderDate).toLocaleDateString("en-IN")
+                          : "N/A"}
+                      </p>
+
                     </div>
                     <div>
                       <p className="text-xs text-brand-gray-light mb-1">Total Amount</p>
-                      <p className="font-semibold text-brand-purple">₹1,299</p>
+                      <p className="font-semibold text-brand-purple">
+                        ₹{orderData?.orderInfo?.amount || "N/A"}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-brand-gray-light mb-1">Status</p>
-                      <p className="font-semibold text-brand-green">In Transit</p>
-                    </div>
+                      <p className="font-semibold text-brand-green">
+                        {orderData?.orderInfo?.currentStatus || orderData?.orderInfo?.status}
+                      </p> </div>
                   </div>
                 </div>
 
@@ -153,32 +166,23 @@ export default function TrackOrder() {
                     Order Items
                   </h3>
                   <div className="space-y-3">
-                    <div className="flex gap-4 pb-3 border-b border-brand-gray-border">
-                      <div className="w-16 h-16 bg-brand-gray-lighter rounded-md flex items-center justify-center text-2xl flex-shrink-0">
-                        📦
+                    {orderData?.items?.map((item: any) => (
+                      <div key={item._id} className="flex gap-4 pb-3 border-b border-brand-gray-border">
+                        <img
+                          src={item.image}
+                          className="w-16 h-16 object-cover rounded-md"
+                        />
+
+                        <div className="flex-1">
+                          <p className="font-semibold text-brand-blue-dark">
+                            {item.name}
+                          </p>
+                          <p className="text-sm text-brand-gray-light">
+                            Qty: {item.quantity} × ₹{item.price}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-brand-blue-dark">
-                          Premium Makhana - Original
-                        </p>
-                        <p className="text-sm text-brand-gray-light">
-                          Qty: 1 × ₹1,099
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-4 pb-3">
-                      <div className="w-16 h-16 bg-brand-gray-lighter rounded-md flex items-center justify-center text-2xl flex-shrink-0">
-                        📦
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-brand-blue-dark">
-                          Roasted Makhana - Cheese & Herbs
-                        </p>
-                        <p className="text-sm text-brand-gray-light">
-                          Qty: 1 × ₹200 (Free)
-                        </p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
 
@@ -189,54 +193,42 @@ export default function TrackOrder() {
                   </h3>
 
                   <div className="space-y-4">
-                    {mockOrderStatus.map((step, index) => (
-                      <div key={step.status} className="flex gap-4">
-                        {/* Timeline dot and line */}
-                        <div className="flex flex-col items-center">
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                              step.completed
-                                ? "bg-brand-green text-white"
-                                : "bg-brand-gray-lighter border-2 border-brand-gray-border"
-                            }`}
-                          >
-                            {step.completed ? (
+                    {orderData?.timeline?.map((step: any, index: number) => {
+                      const status = mapStatus(step.activity || step.status);
+
+                      return (
+                        <div key={index} className="flex gap-4">
+                          <div className="flex flex-col items-center">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-brand-green text-white">
                               <CheckCircle size={20} />
-                            ) : (
-                              <Clock size={20} className="text-brand-gray" />
+                            </div>
+                            {index < (orderData?.timeline?.length || 0) - 1 && (
+                              <div className="w-0.5 h-16 bg-brand-green"></div>
                             )}
                           </div>
-                          {index < mockOrderStatus.length - 1 && (
-                            <div
-                              className={`w-0.5 h-16 ${
-                                step.completed ? "bg-brand-green" : "bg-brand-gray-lighter"
-                              }`}
-                            ></div>
-                          )}
-                        </div>
 
-                        {/* Status Content */}
-                        <div className="pb-4 flex-1">
-                          <h4 className="font-semibold text-brand-blue-dark capitalize mb-1">
-                            {step.status === "packed" && "Order Packed"}
-                            {step.status === "shipped" && "Shipped"}
-                            {step.status === "delivered" && "Delivery"}
-                          </h4>
-                          <p className="text-sm text-brand-gray-light mb-2">
-                            {new Date(step.date).toLocaleDateString("en-IN", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </p>
-                          {step.location && (
-                            <p className="text-sm text-brand-gray">
-                              📍 {step.location}
+                          <div className="pb-4 flex-1">
+                            <h4 className="font-semibold text-brand-blue-dark capitalize">
+                              {status}
+                            </h4>
+
+                            <p className="text-sm text-brand-gray-light">
+                              {new Date(step.date).toLocaleString("en-IN")}
                             </p>
-                          )}
+
+                            {step.location && (
+                              <p className="text-sm text-brand-gray">📍 {step.location}</p>
+                            )}
+
+                            {step.activity && (
+                              <p className="text-xs text-brand-gray-light mt-1">
+                                {step.activity}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -246,13 +238,13 @@ export default function TrackOrder() {
                     Shipping Address
                   </h3>
                   <div className="text-sm text-brand-gray-dark space-y-1">
-                    <p>John Doe</p>
-                    <p>123 Main Street, Apartment 4B</p>
-                    <p>Mumbai, Maharashtra 400001</p>
-                    <p>India</p>
-                    <p className="mt-3 text-brand-gray-light">
-                      Phone: +91 98765 43210
+                    <p>{orderData?.address?.mobile}</p>
+                    <p>{orderData?.address?.address_line}</p>
+                    <p>
+                      {orderData?.address?.city}, {orderData?.address?.state}{" "}
+                      {orderData?.address?.pincode}
                     </p>
+                    <p>{orderData?.address?.country}</p>
                   </div>
                 </div>
 
@@ -279,7 +271,6 @@ export default function TrackOrder() {
                   onClick={() => {
                     setIsSearched(false);
                     setOrderId("");
-                    setEmail("");
                   }}
                   className="w-full py-3 px-4 border border-brand-gray-border text-brand-blue-dark font-semibold rounded-md hover:bg-brand-gray-lighter transition-colors"
                 >
@@ -289,7 +280,7 @@ export default function TrackOrder() {
             )}
 
             {/* No Results State */}
-            {isSearched && !orderId && (
+            {isSearched && !orderData && !loading && (
               <div className="mt-12 text-center py-12 border border-brand-gray-border rounded-lg bg-brand-gray-lightest">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white flex items-center justify-center text-3xl">
                   🔍
@@ -298,7 +289,7 @@ export default function TrackOrder() {
                   Order Not Found
                 </h3>
                 <p className="text-sm text-brand-gray mb-6">
-                  Please check your Order ID and email address and try again.
+                  Please check your Order ID and try again.
                 </p>
               </div>
             )}
