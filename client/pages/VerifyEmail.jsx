@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Container from "@/components/ui/container";
+import { useEffect } from "react";
 
 import api from "@/api/axios";
 
@@ -18,7 +19,17 @@ export default function VerifyEmail() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+const [timer, setTimer] = useState(30);
+useEffect(() => {
+  if (timer === 0) return;
 
+  const interval = setInterval(() => {
+    setTimer((prev) => prev - 1);
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [timer]);
   if (!email) {
     navigate("/signup");
     return null;
@@ -45,6 +56,21 @@ export default function VerifyEmail() {
       setLoading(false);
     }
   };
+
+  const handleResend = async () => {
+  try {
+    setResendLoading(true);
+
+    await api.post("/auth/resend-otp", { email });
+
+    setTimer(30); // reset timer
+    setError("OTP resent successfully");
+  } catch (err) {
+    setError("Failed to resend OTP");
+  } finally {
+    setResendLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -105,6 +131,22 @@ export default function VerifyEmail() {
                   <ArrowRight size={18} />
                 </button>
               </form>
+              <div className="text-center text-sm mt-4">
+  {timer > 0 ? (
+    <p className="text-gray-500">
+      Resend OTP in {timer}s
+    </p>
+  ) : (
+    <button
+      type="button"
+      onClick={handleResend}
+      disabled={resendLoading}
+      className="text-brand-purple font-semibold hover:underline"
+    >
+      {resendLoading ? "Resending..." : "Resend OTP"}
+    </button>
+  )}
+</div>
             </div>
           </Container>
         </section>

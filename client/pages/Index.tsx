@@ -207,6 +207,16 @@ export default function Index() {
           products={featuredProducts.length ? featuredProducts : products.slice(0, 4)}
           loading={loading}
         />
+   <HomeAdBanner
+  heading="We Now Accept Bulk Orders"
+  subtext="Looking to order in large quantities for your business, events, or retail? Get the best wholesale prices directly from us."
+  ctaText="Explore Bulk Orders"
+  ctaLink="/b2b"
+  imagePosition="right"
+  imageUrl="https://i.ibb.co/zWy0mwyn/Untitled-2.webp"
+  backgroundColor="#f5efe6"   // warm beige
+  textColor="#3e2c1c"         // dark brown text
+/>
 
         <WhyDesiiGlobalSection />
         <HomeAdBanner
