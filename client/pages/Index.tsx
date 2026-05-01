@@ -195,7 +195,7 @@ export default function Index() {
           ctaText="Explore Now"
           ctaLink="/shop"
           imagePosition="right"
-          imageUrl="https://i.ibb.co/F4H6F0dn/Untitled-3.webp"
+          imageUrl="https://i.ibb.co/zzRDBX7/Untitled-design-1.webp"
            backgroundColor="#f1e5dc"
            textColor="#1a1a1a"
         />
