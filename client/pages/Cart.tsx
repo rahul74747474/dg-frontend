@@ -23,12 +23,7 @@ const { items, removeItem, updateQuantity, total } = useCart();
   };
 
   /* ---------- CALCULATIONS ---------- */
-
   const subtotal = total;
-  const discount = subtotal * 0.1; // placeholder
-  const delivery = subtotal > 500 ? 0 : 50; // realistic INR logic
-  const grandTotal = subtotal - discount + delivery;
-
   const isEmpty = items.length === 0;
 
   return (
@@ -123,33 +118,25 @@ const { items, removeItem, updateQuantity, total } = useCart();
                   <div className="sticky top-24 border rounded-lg p-6 space-y-4 bg-gray-50">
                     <h3 className="text-lg font-bold">Order Summary</h3>
 
-                    <div className="flex justify-between">
-                      <span>Subtotal</span>
-                      <span>₹{subtotal.toFixed(2)}</span>
+                    <div className="flex justify-between text-base">
+                      <span>Items Subtotal</span>
+                      <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
                     </div>
 
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount (10%)</span>
-                      <span>-₹{discount.toFixed(2)}</span>
-                    </div>
-
-                    <div className="flex justify-between">
-                      <span>Delivery</span>
-                      <span>
-                        {delivery === 0 ? "FREE" : `₹${delivery}`}
-                      </span>
-                    </div>
+                    <p className="text-xs text-gray-500 bg-white p-3 rounded border">
+                      💡 Delivery charges, applicable discounts, and taxes will be calculated during checkout based on your delivery address.
+                    </p>
 
                     <hr />
 
                     <div className="flex justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span>₹{grandTotal.toFixed(2)}</span>
+                      <span>Subtotal</span>
+                      <span className="text-brand-purple">₹{subtotal.toFixed(2)}</span>
                     </div>
 
                     <button
                       onClick={handleCheckout}
-                      className="w-full py-3 bg-brand-purple text-white rounded-lg flex justify-center items-center gap-2"
+                      className="w-full py-3 bg-brand-purple text-white rounded-lg flex justify-center items-center gap-2 hover:opacity-90 transition-opacity"
                     >
                       Proceed to Checkout <ArrowRight size={18} />
                     </button>

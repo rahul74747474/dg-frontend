@@ -11,7 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 
 interface Address {
   _id: string;
-  mobile: string;
+  mobile?: string;
   address_line: string;
   city: string;
   state: string;

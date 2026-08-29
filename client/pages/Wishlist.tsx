@@ -21,14 +21,15 @@ export default function Wishlist() {
   };
 
   const handleAddToCart = (item: any) => {
+    const targetId = item.productId || item._id;
     addToCart({
-      productId: item.productId,
+      id: targetId,
       name: item.productTitle,
       price: item.price,
       image: item.image,
       quantity: 1,
     });
-    toast.success("Added to cart");
+    toast.success("Added to cart 🛒");
   };
 
   const isEmpty = !loading && items.length === 0;

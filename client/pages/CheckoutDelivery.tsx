@@ -149,9 +149,7 @@ export default function CheckoutDelivery() {
   const cartSummary = {
     items: items.length,
     subtotal: total,
-    discount: total*0.1,
-    delivery: total > 499 ? 0 : 50,
-    total: total + (total > 499 ? 0 :50) - (total*0.1),
+    total: total,
   };
 
   return (
@@ -302,8 +300,6 @@ export default function CheckoutDelivery() {
                 <CheckoutSummary
                   items={cartSummary.items}
                   subtotal={cartSummary.subtotal}
-                  discount={cartSummary.discount}
-                  delivery={cartSummary.delivery}
                   total={cartSummary.total}
                 />
               </div>

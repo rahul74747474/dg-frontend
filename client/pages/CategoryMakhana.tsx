@@ -3,47 +3,35 @@ import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import Container from "@/components/ui/container";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/api/axios";
+import { AlertCircle, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
-interface Product {
-  id: string;
-  image: string;
-  title: string;
-  price: string;
-  badge?: string;
-}
-
-const makhanaProducts: Product[] = [
-  {
-    id: "m1",
-    image: "https://via.placeholder.com/300x300?text=Makhana+Original",
-    title: "Premium Makhana - Original",
-    price: "₹249 – ₹1,099",
-    badge: "Best Seller",
-  },
-  {
-    id: "m2",
-    image: "https://via.placeholder.com/300x300?text=Makhana+Cheese",
-    title: "Makhana - Cheese & Herbs",
-    price: "₹299 – ₹1,199",
-  },
-  {
-    id: "m3",
-    image: "https://via.placeholder.com/300x300?text=Makhana+Spicy",
-    title: "Makhana - Spicy Masala",
-    price: "₹299 – ₹1,199",
-  },
-  {
-    id: "m4",
-    image: "https://via.placeholder.com/300x300?text=Makhana+Sweet",
-    title: "Makhana - Sweet & Tangy",
-    price: "₹279 – ₹1,099",
-  },
-];
-
-const flavours = ["All", "Original", "Cheese & Herbs", "Spicy Masala", "Sweet & Tangy"];
+const flavours = ["All", "Flavoured Makhana", "Plain Makhana", "Sweet Makhana"];
 
 export default function CategoryMakhana() {
   const [selectedFlavour, setSelectedFlavour] = useState("All");
+
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["category-makhana"],
+    queryFn: async () => {
+      const res = await api.get("/products");
+      return res.data?.products || [];
+    },
+  });
+
+  const filteredProducts = products.filter((p: any) => {
+    if (selectedFlavour === "All") return true;
+    return (
+      p.catName?.toLowerCase().includes(selectedFlavour.toLowerCase()) ||
+      p.name?.toLowerCase().includes(selectedFlavour.toLowerCase())
+    );
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -68,7 +56,7 @@ export default function CategoryMakhana() {
         <Container>
           <div className="py-8">
             <h3 className="font-poppins font-semibold text-brand-blue-dark mb-4">
-              Select Flavour
+              Select Category
             </h3>
             <div className="flex flex-wrap gap-2">
               {flavours.map((flavour) => (
@@ -77,7 +65,7 @@ export default function CategoryMakhana() {
                   onClick={() => setSelectedFlavour(flavour)}
                   className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                     selectedFlavour === flavour
-                      ? "bg-brand-purple text-white"
+                      ? "bg-brand-purple text-white shadow-md shadow-brand-purple/20"
                       : "bg-brand-gray-lighter text-brand-gray-dark hover:bg-brand-gray-border"
                   }`}
                 >
@@ -91,23 +79,44 @@ export default function CategoryMakhana() {
         {/* Products Grid */}
         <Container>
           <div className="py-8">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {makhanaProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  image={product.image}
-                  title={product.title}
-                  price={product.price}
-                  badge={product.badge}
-                  link={`/product/${product.id}`}
-                />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="py-16 text-center">
+                <div className="w-10 h-10 border-4 border-brand-purple border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                <p className="text-gray-500 font-medium text-sm">Loading organic makhana products...</p>
+              </div>
+            ) : isError ? (
+              <div className="py-16 text-center bg-red-50 rounded-2xl border border-red-100 p-8 max-w-md mx-auto">
+                <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
+                <h3 className="text-lg font-bold text-red-900 mb-1">Failed to load products</h3>
+                <p className="text-sm text-red-600 mb-4">Please check your internet connection or server status.</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="py-16 text-center bg-gray-50 rounded-2xl p-8 max-w-md mx-auto">
+                <p className="text-gray-500 mb-4">No products found in this category.</p>
+                <Link to="/shop" className="px-5 py-2.5 bg-brand-purple text-white rounded-xl text-sm font-semibold inline-flex items-center gap-2">
+                  View All Products <ArrowRight size={16} />
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {filteredProducts.map((product: any) => (
+                  <ProductCard
+                    key={product._id}
+                    id={product._id}
+                    title={product.name}
+                    price={product.price}
+                    image={product.images?.[0] || "https://via.placeholder.com/300x300?text=DesiiGlobal"}
+                    slug={product.slug}
+                    countInStock={product.countInStock ?? 0}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </Container>
 
         {/* Nutrition Highlight */}
-        <section className="bg-brand-gray-lightest">
+        <section className="bg-brand-gray-lightest mt-12">
           <Container>
             <div className="py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="flex flex-col items-center text-center gap-2">
@@ -118,7 +127,7 @@ export default function CategoryMakhana() {
                   High Protein
                 </h4>
                 <p className="text-sm text-brand-gray-light">
-                  10g protein per serving for muscle building
+                  Plant protein per serving for muscle nourishment
                 </p>
               </div>
               <div className="flex flex-col items-center text-center gap-2">
@@ -126,10 +135,10 @@ export default function CategoryMakhana() {
                   <span className="text-2xl">⚡</span>
                 </div>
                 <h4 className="font-poppins font-semibold text-brand-blue-dark">
-                  Low Calorie
+                  Slow-Roasted
                 </h4>
                 <p className="text-sm text-brand-gray-light">
-                  Just 100 calories per serving
+                  Roasted in pure olive oil & ghee, never deep fried
                 </p>
               </div>
               <div className="flex flex-col items-center text-center gap-2">
@@ -137,10 +146,10 @@ export default function CategoryMakhana() {
                   <span className="text-2xl">✨</span>
                 </div>
                 <h4 className="font-poppins font-semibold text-brand-blue-dark">
-                  Gluten Free
+                  100% Gluten Free
                 </h4>
                 <p className="text-sm text-brand-gray-light">
-                  100% natural, no additives
+                  Direct from certified organic foxnut farms
                 </p>
               </div>
             </div>

@@ -1,233 +1,187 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Tag, Truck, Percent, Sparkles, Copy, Check } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Container from "@/components/ui/container";
+import { toast } from "sonner";
 
-interface Offer {
+interface OfferCard {
   id: string;
+  badge: string;
   title: string;
   description: string;
-  type: "percentage" | "flat" | "coupon";
-  value: string | number;
-  coupon?: string;
-  validity: string;
-  image: string;
-  conditions?: string;
+  code?: string;
+  highlight: string;
+  conditions: string;
+  icon: typeof Tag;
+  iconBg: string;
+  iconColor: string;
 }
 
-const offers: Offer[] = [
+const activeOffers: OfferCard[] = [
   {
-    id: "1",
-    title: "30% Off on First Order",
-    description: "New customer exclusive offer",
-    type: "percentage",
-    value: 30,
-    coupon: "FIRST30",
-    validity: "Valid till 31st Dec 2025",
-    image: "https://via.placeholder.com/500x200?text=First+Order",
-    conditions: "Min purchase ₹499",
+    id: "welcome10",
+    badge: "New Customer Special",
+    title: "10% Off on Your Order",
+    description: "Enjoy a flat 10% instant discount across all organic makhana products when placing your order.",
+    code: "WELCOME10",
+    highlight: "10% INSTANT OFF",
+    conditions: "Automatically verified and applied by the backend pricing engine at checkout.",
+    icon: Percent,
+    iconBg: "bg-purple-100",
+    iconColor: "text-brand-purple",
   },
   {
-    id: "2",
-    title: "Flat ₹300 Off",
-    description: "On purchases above ₹1500",
-    type: "flat",
-    value: 300,
-    coupon: "FLAT300",
-    validity: "Valid till 15th Jan 2026",
-    image: "https://via.placeholder.com/500x200?text=Flat+Discount",
-    conditions: "Min purchase ₹1500",
+    id: "free-delivery",
+    badge: "All Customers",
+    title: "Free Express Shipping Across India",
+    description: "Orders above ₹499 qualify for 100% free home delivery with premium Shiprocket logistics.",
+    highlight: "FREE SHIPPING ON ₹499+",
+    conditions: "Cart taxable amount must be ₹499 or higher. Shipping fee absorbed by merchant.",
+    icon: Truck,
+    iconBg: "bg-green-100",
+    iconColor: "text-green-700",
   },
   {
-    id: "3",
-    title: "Buy 2 Get 1 Free",
-    description: "On selected products",
-    type: "percentage",
-    value: 33,
-    coupon: "BUY2GET1",
-    validity: "Limited time offer",
-    image: "https://via.placeholder.com/500x200?text=Buy2Get1",
-    conditions: "On selected items only",
+    id: "flat100",
+    badge: "Cart Booster",
+    title: "Flat ₹100 Off on Bulk Cart",
+    description: "Stock up on healthy family snacking and get a flat ₹100 discount on orders exceeding ₹999.",
+    code: "SAVE100",
+    highlight: "FLAT ₹100 OFF",
+    conditions: "Minimum cart subtotal of ₹999. Calculated automatically at checkout.",
+    icon: Tag,
+    iconBg: "bg-amber-100",
+    iconColor: "text-amber-700",
   },
   {
-    id: "4",
-    title: "Free Shipping",
-    description: "On all orders above ₹499",
-    type: "coupon",
-    value: "FREE SHIPPING",
-    coupon: "FREESHIP",
-    validity: "Always active",
-    image: "https://via.placeholder.com/500x200?text=Free+Shipping",
-    conditions: "Applicable on all orders",
+    id: "b2b-wholesale",
+    badge: "B2B & Retailers",
+    title: "Custom Bulk & Corporate Pricing",
+    description: "Planning large corporate gifts, wedding favors, or retail distribution? Get direct wholesale tiered rates.",
+    highlight: "TIERED WHOLESALE RATES",
+    conditions: "Minimum order quantity applies. Inquire via our dedicated B2B portal.",
+    icon: Sparkles,
+    iconBg: "bg-blue-100",
+    iconColor: "text-blue-700",
   },
 ];
 
 export default function Offers() {
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const handleCopy = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    toast.success(`Coupon code ${code} copied to clipboard!`);
+    setTimeout(() => setCopiedCode(null), 3000);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50/50">
       <Header />
       <main className="flex-1">
         {/* Page Header */}
-        <section className="bg-brand-peach-bg">
+        <section className="bg-brand-peach-bg py-12 md:py-16 border-b border-brand-purple/10">
           <Container>
-            <div className="py-12 text-center">
-              <h1 className="text-3xl md:text-4xl font-bold text-brand-purple-dark mb-3">
-                Special Offers
+            <div className="text-center max-w-2xl mx-auto">
+              <span className="inline-block px-3 py-1 rounded-full bg-brand-purple/10 text-brand-purple font-bold text-xs uppercase tracking-wider mb-3">
+                Live Pricing Rules & Discounts
+              </span>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-brand-purple-dark mb-3">
+                Offers & Promotions
               </h1>
-              <p className="text-brand-gray max-w-2xl mx-auto text-base md:text-lg">
-                Don't miss out on our amazing deals and exclusive discounts.
-                Shop smart and save more!
+              <p className="text-brand-gray text-base md:text-lg">
+                All discounts and free shipping benefits are calculated authoritatively in real-time at checkout.
               </p>
             </div>
           </Container>
         </section>
 
-        {/* Active Offers */}
+        {/* Active Offers Grid */}
         <Container>
-          <div className="py-12">
-            <h2 className="text-2xl font-bold text-brand-purple-dark mb-8">
-              Active Offers
-            </h2>
-
-            <div className="space-y-6">
-              {offers.map((offer) => (
-                <div
-                  key={offer.id}
-                  className="grid grid-cols-1 md:grid-cols-3 gap-6 border border-brand-gray-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-                >
-                  {/* Image */}
-                  <div className="md:col-span-1 bg-brand-gray-lightest aspect-square md:aspect-auto overflow-hidden">
-                    <img
-                      src={offer.image}
-                      alt={offer.title}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div className="md:col-span-2 p-6 flex flex-col justify-between">
+          <div className="py-12 md:py-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {activeOffers.map((offer) => {
+                const Icon = offer.icon;
+                return (
+                  <div
+                    key={offer.id}
+                    className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 shadow-sm hover:shadow-xl hover:shadow-brand-purple/5 transition-all duration-300 flex flex-col justify-between"
+                  >
                     <div>
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <h3 className="text-2xl font-bold text-brand-purple-dark mb-2">
-                            {offer.title}
-                          </h3>
-                          <p className="text-brand-gray text-base mb-3">
-                            {offer.description}
-                          </p>
+                      <div className="flex items-start justify-between gap-4 mb-4">
+                        <div className={`w-12 h-12 rounded-2xl ${offer.iconBg} ${offer.iconColor} flex items-center justify-center flex-shrink-0`}>
+                          <Icon size={24} />
                         </div>
-                        {offer.type === "percentage" && (
-                          <div className="bg-brand-red text-white px-4 py-2 rounded-full whitespace-nowrap ml-4">
-                            <span className="text-2xl font-bold">{offer.value}%</span>
-                          </div>
-                        )}
+                        <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full">
+                          {offer.badge}
+                        </span>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        <div>
-                          <p className="text-sm font-semibold text-brand-blue-dark mb-1">
-                            Use Code
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <code className="bg-brand-gray-lighter px-3 py-2 rounded-md font-mono font-bold text-brand-blue-dark">
-                              {offer.coupon}
-                            </code>
-                            <button className="p-2 hover:bg-brand-gray-lighter rounded transition-colors">
-                              <span className="text-sm">📋</span>
-                            </button>
-                          </div>
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-brand-blue-dark mb-1">
-                            Validity
-                          </p>
-                          <p className="text-sm text-brand-gray">{offer.validity}</p>
-                        </div>
-                        {offer.conditions && (
-                          <div>
-                            <p className="text-sm font-semibold text-brand-blue-dark mb-1">
-                              Conditions
-                            </p>
-                            <p className="text-sm text-brand-gray">{offer.conditions}</p>
-                          </div>
-                        )}
+                      <h2 className="text-xl font-bold text-gray-900 mb-2">
+                        {offer.title}
+                      </h2>
+                      <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                        {offer.description}
+                      </p>
+
+                      <div className="p-4 rounded-2xl bg-gray-50/80 border border-gray-100 mb-6">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                          Offer Highlight:
+                        </p>
+                        <p className="text-sm font-bold text-brand-purple">
+                          {offer.highlight}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {offer.conditions}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="mt-4 flex gap-2">
-                      <button className="flex-1 py-3 px-4 bg-brand-purple text-white font-semibold rounded-md hover:opacity-90 transition-opacity">
-                        Shop Now
-                      </button>
-                      <button className="py-3 px-4 border border-brand-gray-border rounded-md hover:bg-brand-gray-lighter transition-colors flex items-center gap-2 justify-center">
-                        <span>Share</span>
-                        <ArrowRight size={16} />
-                      </button>
+                    <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-4 flex-wrap">
+                      {offer.code ? (
+                        <div className="flex items-center gap-2">
+                          <span className="px-3 py-1.5 bg-purple-50 text-brand-purple font-mono font-bold text-sm rounded-lg border border-purple-200">
+                            {offer.code}
+                          </span>
+                          <button
+                            onClick={() => handleCopy(offer.code!)}
+                            className="p-2 text-gray-500 hover:text-brand-purple hover:bg-purple-50 rounded-lg transition-colors"
+                            title="Copy code"
+                          >
+                            {copiedCode === offer.code ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-bold text-green-700 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
+                          Auto-Applied in Cart
+                        </span>
+                      )}
+
+                      {offer.id === "b2b-wholesale" ? (
+                        <Link
+                          to="/b2b"
+                          className="px-5 py-2.5 bg-brand-purple text-white rounded-xl text-sm font-bold hover:bg-black transition-all flex items-center gap-2"
+                        >
+                          B2B Portal <ArrowRight size={16} />
+                        </Link>
+                      ) : (
+                        <Link
+                          to="/shop"
+                          className="px-5 py-2.5 bg-brand-purple text-white rounded-xl text-sm font-bold hover:bg-black transition-all flex items-center gap-2"
+                        >
+                          Shop Now <ArrowRight size={16} />
+                        </Link>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </Container>
-
-        {/* Terms Section */}
-        <section className="bg-brand-gray-lightest">
-          <Container>
-            <div className="py-12">
-              <h2 className="text-2xl font-bold text-brand-purple-dark mb-8">
-                Offer Terms & Conditions
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h4 className="font-poppins font-semibold text-brand-blue-dark mb-4">
-                    General Terms
-                  </h4>
-                  <ul className="text-sm text-brand-gray-light space-y-2">
-                    <li className="flex gap-2">
-                      <span>•</span>
-                      <span>Offers are valid for limited time only</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span>•</span>
-                      <span>Cannot be combined with other offers</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span>•</span>
-                      <span>One coupon code per transaction</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span>•</span>
-                      <span>Valid on online purchases only</span>
-                    </li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-poppins font-semibold text-brand-blue-dark mb-4">
-                    Eligibility
-                  </h4>
-                  <ul className="text-sm text-brand-gray-light space-y-2">
-                    <li className="flex gap-2">
-                      <span>•</span>
-                      <span>Minimum purchase amount as mentioned</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span>•</span>
-                      <span>Valid for new and existing customers</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span>•</span>
-                      <span>Discount applied at checkout</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span>•</span>
-                      <span>We reserve the right to cancel offers</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </Container>
-        </section>
       </main>
       <Footer />
     </div>

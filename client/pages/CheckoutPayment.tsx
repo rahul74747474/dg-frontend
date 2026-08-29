@@ -1,223 +1,210 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Check, AlertCircle } from "lucide-react";
+import { Check, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Container from "@/components/ui/container";
 import CheckoutSummary from "@/components/checkout/CheckoutSummary";
 import PaymentMethods from "@/components/checkout/PaymentMethods";
-// import { useCart } from "@/context/CartContext";
 import api from "@/api/axios";
 import { loadRazorpayScript, initializeRazorpayPayment } from "@/services/razorpay";
 
 export default function CheckoutPayment() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [items, setItems] = useState([]);
-    const [total, setTotal] = useState(0);
-    
-      /* ---------- HANDLERS ---------- */
-    const fetchCart = async () => {
-      try {
-        const { data } = await api.get("/cart");
-        console.log("🔥 CART RESPONSE:", data);
-        setItems(data.cartItems);
-    
-        // calculate total
-        const totalAmount = data.cartItems.reduce(
-          (acc, item) => acc + item.productId.price * item.quantity,
-          0
-        );
-    
-        setTotal(totalAmount);
-    
-      } catch (error) {
-        console.error("Cart fetch error", error);
-      }
-    };
-    
-    useEffect(() => {
-      fetchCart();
-    }, []);
-  
+  const queryClient = useQueryClient();
 
- const [method, setMethod] = useState<string>("prepaid");
+  const [method, setMethod] = useState<string>("prepaid");
   const [isProcessing, setIsProcessing] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState<any>(null);
+  const [addressLoading, setAddressLoading] = useState(true);
 
+  // 1. Load selected delivery address from session
   useEffect(() => {
-  const stored = sessionStorage.getItem("deliveryAddressId");
+    const storedAddressId = sessionStorage.getItem("deliveryAddressId");
 
-  if (!stored) {
-    toast.error("Please select a delivery address first");
-    navigate("/checkout/delivery");
-    return;
-  }
-
-  const fetchAddress = async () => {
-    try {
-      const { data } = await api.get(`/address/${stored}`);
-      setDeliveryAddress(data.address);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to fetch address");
+    if (!storedAddressId) {
+      toast.error("Please select a delivery address first");
+      navigate("/checkout/delivery");
+      return;
     }
-  };
 
-  fetchAddress();
+    const fetchAddress = async () => {
+      try {
+        setAddressLoading(true);
+        const { data } = await api.get(`/address/${storedAddressId}`);
+        setDeliveryAddress(data.address);
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to load delivery address");
+        navigate("/checkout/delivery");
+      } finally {
+        setAddressLoading(false);
+      }
+    };
 
-  // load razorpay
-  loadRazorpayScript();
-}, []);
+    fetchAddress();
+    loadRazorpayScript().catch((err) => console.warn("Razorpay script preload:", err.message));
+  }, [navigate]);
 
-  if (!deliveryAddress) {
-    return null;
-  }
+  // 2. Fetch Authoritative Order Pricing & Real-Time Shipping from Backend
+  const normalizedMethod = method === "cod" ? "COD" : "ONLINE";
 
-  const cartSummary = {
-    items: items.length,
-    subtotal: total,
+  const {
+    data: previewResponse,
+    isLoading: isPreviewLoading,
+    isError: isPreviewError,
+    error: previewError,
+    refetch: refetchPreview,
+  } = useQuery({
+    queryKey: ["order-preview", deliveryAddress?._id, normalizedMethod],
+    queryFn: async () => {
+      const res = await api.post("/orders/preview", {
+        addressId: deliveryAddress?._id,
+        paymentMethod: normalizedMethod,
+      });
+      return res.data;
+    },
+    enabled: Boolean(deliveryAddress?._id),
+    staleTime: 1000 * 30, // 30 seconds
+    retry: 1,
+  });
+
+  const billingData = previewResponse || null;
+  const isServiceable = billingData?.serviceable ?? true;
+  const serviceabilityError = billingData?.message || "";
+  const items = billingData?.items || [];
+  const pricing = billingData?.pricing || {
+    subTotal: 0,
     discount: 0,
-    delivery: total > 499 ? 0 : 99,
-    total: total + (total > 499 ? 0 : 99),
+    shipping: 0,
+    tax: 0,
+    codCharge: 0,
+    grandTotal: 0,
   };
+  const shippingInfo = billingData?.shipping || {};
+  const discountInfo = billingData?.discount || {};
 
+  // 3. Handle Place Order
   const handlePlaceOrder = async () => {
     if (!agreeTerms) {
       toast.error("Please agree to the terms and conditions");
       return;
     }
 
+    if (!isServiceable) {
+      toast.error(serviceabilityError || "Delivery is not available for this pincode");
+      return;
+    }
+
     if (method === "cod") {
-  await handleCODOrder();
-} else {
-  await handleRazorpayPayment();
-}
+      await handleCODOrder();
+    } else {
+      await handleRazorpayPayment();
+    }
   };
 
+  // 4. Cash On Delivery Flow
   const handleCODOrder = async () => {
-  try {
-    setIsProcessing(true);
-
-    // ✅ send FULL address (not ID)
-    const res = await api.post("/orders/", {
-      paymentMethod: "COD",
-      delivery_address: deliveryAddress, // 🔥 IMPORTANT FIX
-    });
-
-    const createdOrder = res.data.order;
-
-    toast.success("Order placed with Cash on Delivery 🎉");
-
-    // 🚚 Create shipping
     try {
-      await api.post(`/shipping/create/${createdOrder._id}`);
-      console.log("🚚 Shipping created successfully");
-    } catch (shippingError) {
-      console.error("🚨 Shipping failed:", shippingError);
-      toast.error("Order placed but shipping failed");
+      setIsProcessing(true);
+
+      const res = await api.post("/orders", {
+        addressId: deliveryAddress._id,
+        paymentMethod: "COD",
+      });
+
+      const createdOrder = res.data.order;
+      toast.success("Order placed successfully with Cash on Delivery 🎉");
+
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      sessionStorage.removeItem("deliveryAddressId");
+
+      navigate("/order-success", {
+        state: { orderId: createdOrder._id },
+      });
+    } catch (error: any) {
+      console.error("COD Order Placement Error:", error);
+      toast.error(error.response?.data?.message || "Failed to place COD order");
+      setIsProcessing(false);
     }
+  };
 
-    sessionStorage.removeItem("deliveryAddressId");
-
-    // ✅ Redirect
-    navigate("/order-success", {
-      state: { orderId: createdOrder._id },
-    });
-
-  } catch (error) {
-    console.error("COD ERROR:", error);
-    toast.error(
-      error.response?.data?.message || "Failed to place COD order"
-    );
-    setIsProcessing(false);
-  }
-};
-
+  // 5. Razorpay Online Payment Flow
   const handleRazorpayPayment = async () => {
-  try {
-    setIsProcessing(true);
-
-    await loadRazorpayScript(); // 🔥 ensure loaded
-
-    const { data } = await api.post("/payment/create-order");
-
-    console.log("Order:", data);
-
-    const result = await initializeRazorpayPayment({
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: data.order.amount,
-      currency: "INR",
-      name: "DesiiGlobal",
-      description: "Order Payment",
-      order_id: data.order.id,
-      prefill: {
-        name: "Desiiglobal",
-        contact: "9355346445",
-      },
-      theme: {
-        color: "#704FE6",
-      },
-    });
-
-    console.log("Payment Result:", result);
-
-    if (result.razorpay_payment_id) {
-      await verifyPaymentAndCreateOrder(
-        data.order.id,
-        result.razorpay_payment_id,
-        result.razorpay_signature
-      );
-    }
-
-  } catch (error: any) {
-    console.error("ERROR:", error);
-    toast.error(error.message || "Payment failed");
-    setIsProcessing(false);
-  }
-};
-
-  const verifyPaymentAndCreateOrder = async (
-  orderId,
-  paymentId,
-  signature
-) => {
-  try {
-    const addressId = sessionStorage.getItem("deliveryAddressId");
-
-    const res = await api.post("/payment/verify", {
-      razorpay_order_id: orderId,
-      razorpay_payment_id: paymentId,
-      razorpay_signature: signature,
-      addressId,
-    });
-
-    const createdOrder = res.data.order;
-
-    toast.success("Payment successful 🎉");
-
-    // 🔥 STEP 2: CALL SHIPPING API
     try {
-      await api.post(`/shipping/create/${createdOrder._id}`);
-      console.log("🚚 Shipping created successfully");
-    } catch (shippingError) {
-      console.error("🚨 Shipping failed:", shippingError);
-      toast.error("Order placed but shipping failed");
+      setIsProcessing(true);
+      await loadRazorpayScript();
+
+      // Step 1: Request authoritative Razorpay order from backend
+      const { data } = await api.post("/payment/create-order", {
+        addressId: deliveryAddress._id,
+      });
+
+      const razorpayOrder = data.order;
+
+      // Step 2: Open Razorpay Gateway Modal
+      const result = await initializeRazorpayPayment({
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_placeholder",
+        amount: razorpayOrder.amount,
+        currency: "INR",
+        name: "DesiiGlobal",
+        description: "Organic Health Snacks Payment",
+        order_id: razorpayOrder.id,
+        prefill: {
+          name: deliveryAddress.name || "Customer",
+          contact: deliveryAddress.mobile || "",
+        },
+        theme: {
+          color: "#704FE6",
+        },
+      });
+
+      // Step 3: Verify Payment and commit order on backend
+      if (result.razorpay_payment_id) {
+        const verifyRes = await api.post("/payment/verify", {
+          razorpay_order_id: data.order.id,
+          razorpay_payment_id: result.razorpay_payment_id,
+          razorpay_signature: result.razorpay_signature,
+          addressId: deliveryAddress._id,
+        });
+
+        const confirmedOrder = verifyRes.data.order;
+        toast.success("Payment verified! Your order has been placed 🎉");
+
+        queryClient.invalidateQueries({ queryKey: ["cart"] });
+        sessionStorage.removeItem("deliveryAddressId");
+
+        navigate("/order-success", {
+          state: { orderId: confirmedOrder._id },
+        });
+      }
+    } catch (error: any) {
+      console.error("Payment Processing Error:", error);
+      toast.error(error?.response?.data?.message || error.message || "Payment cancelled or failed");
+      setIsProcessing(false);
     }
+  };
 
-    sessionStorage.removeItem("deliveryAddressId");
-
-    // 🔥 STEP 3: NAVIGATE
-    navigate("/order-success", {
-      state: { orderId: createdOrder._id },
-    });
-
-  } catch (error) {
-    toast.error("Payment verification failed");
-    setIsProcessing(false);
+  if (addressLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-3">
+            <div className="w-8 h-8 border-4 border-brand-purple border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="text-sm text-gray-500">Loading delivery details...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
-};
+
+  if (!deliveryAddress) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -237,7 +224,7 @@ export default function CheckoutPayment() {
               Review & Pay
             </h1>
             <p className="text-brand-gray-light mt-2">
-              Review your order and select a payment method
+              Review your live billing breakdown and choose a payment method
             </p>
           </Container>
         </section>
@@ -246,85 +233,123 @@ export default function CheckoutPayment() {
         <section className="py-8 md:py-12">
           <Container>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Payment Section - Left Column */}
+              {/* Left Column - Details & Payment */}
               <div className="lg:col-span-2 space-y-8">
-                {/* Delivery Address */}
-                <div className="bg-brand-gray-lightest rounded-lg p-6 border border-brand-gray-border">
-                  <h3 className="text-lg font-bold text-brand-gray-dark mb-4">
-                    Delivery Address
-                  </h3>
-                  <p className="font-semibold text-brand-gray-dark">
-                    {deliveryAddress.address_line}
-                  </p>
-                  <p className="text-sm text-brand-gray-light mt-2">
-                    {deliveryAddress.city}, {deliveryAddress.state}{" "}
-                    {deliveryAddress.pincode}
-                  </p>
-                  <p className="text-sm text-brand-gray-light">
-                    {deliveryAddress.mobile}
-                  </p>
+                {/* Delivery Address Card */}
+                <div className="bg-brand-gray-lightest rounded-xl p-6 border border-brand-gray-border flex justify-between items-start">
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">
+                      Delivering To
+                    </h3>
+                    <p className="font-bold text-brand-gray-dark text-base">
+                      {deliveryAddress.name}
+                    </p>
+                    <p className="text-sm text-brand-gray-dark mt-1">
+                      {deliveryAddress.address_line}
+                    </p>
+                    <p className="text-sm text-brand-gray-light">
+                      {deliveryAddress.city}, {deliveryAddress.state} —{" "}
+                      <span className="font-bold text-brand-purple">{deliveryAddress.pincode}</span>
+                    </p>
+                    <p className="text-sm text-brand-gray-light mt-1">
+                      Phone: {deliveryAddress.mobile}
+                    </p>
+                  </div>
                   <button
                     onClick={() => navigate("/checkout/delivery")}
-                    className="text-sm text-brand-purple hover:underline mt-3"
+                    className="text-sm font-semibold text-brand-purple hover:underline px-3 py-1.5 bg-white border border-brand-gray-border rounded-lg shadow-sm"
                   >
                     Change Address
                   </button>
                 </div>
 
+                {/* Serviceability Warning */}
+                {!isServiceable && (
+                  <div className="flex gap-3 p-4 bg-red-50 border border-red-300 rounded-xl text-red-800">
+                    <AlertCircle size={24} className="flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-bold">Delivery Unavailable for this Pincode</h4>
+                      <p className="text-sm mt-1">
+                        {serviceabilityError || `Shiprocket couriers do not currently service pincode ${deliveryAddress.pincode}.`}
+                      </p>
+                      <button
+                        onClick={() => navigate("/checkout/delivery")}
+                        className="mt-2 text-xs font-bold text-red-900 underline"
+                      >
+                        Choose a different delivery address
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Order Items Review */}
-                <div className="bg-white rounded-lg p-6 border border-brand-gray-border">
-                  <h3 className="text-lg font-bold text-brand-gray-dark mb-6">
-                    Order Items
+                <div className="bg-white rounded-xl p-6 border border-brand-gray-border shadow-sm">
+                  <h3 className="text-lg font-bold text-brand-gray-dark mb-4">
+                    Review Order Items ({items.length})
                   </h3>
 
-                  <div className="space-y-4">
-                    {items.map((item) => (
-                      <div
-                        key={item._id}
-                        className="flex justify-between items-center pb-4 border-b border-brand-gray-border last:border-b-0"
-                      >
-                        <div>
-                          <p className="font-semibold text-brand-gray-dark">
-                            {item.productId.name}
+                  {isPreviewLoading ? (
+                    <div className="py-6 text-center text-gray-400 text-sm">
+                      Loading cart items...
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-100">
+                      {items.map((item: any) => (
+                        <div
+                          key={item.productId}
+                          className="py-3 flex items-center justify-between gap-4"
+                        >
+                          <div className="flex items-center gap-3">
+                            {item.image && (
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="w-12 h-12 object-cover rounded-lg border"
+                              />
+                            )}
+                            <div>
+                              <p className="font-semibold text-brand-gray-dark text-sm">
+                                {item.name}
+                              </p>
+                              <p className="text-xs text-brand-gray-light">
+                                Qty: {item.quantity} × ₹{item.price}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="font-bold text-brand-purple text-sm">
+                            ₹{(item.price * item.quantity).toFixed(2)}
                           </p>
-                          <p className="text-sm text-brand-gray-light">
-  Quantity: {item.quantity}
-</p>
                         </div>
-                        <p className="font-bold text-brand-purple">
-  ₹{(item.productId.price * item.quantity).toFixed(2)}
-</p>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans text-gray-900">
-      <div className="max-w-2xl w-full bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-gray-100"> */}
-        
-        {/* Header for context */}
-        <div className="mb-8 pb-6 border-b border-gray-100">
-          <h1 className="text-2xl font-extrabold tracking-tight">Checkout</h1>
-          <p className="text-gray-500 text-sm mt-1">Complete your order by choosing a payment method.</p>
-        </div>
+                {/* Payment Methods Component */}
+                <div className="bg-white rounded-xl p-6 border border-brand-gray-border shadow-sm">
+                  <div className="mb-6">
+                    <h3 className="text-lg font-bold text-brand-gray-dark">Select Payment Method</h3>
+                    <p className="text-sm text-brand-gray-light">
+                      Choose between online payment (UPI, Cards, NetBanking) or Cash on Delivery
+                    </p>
+                  </div>
 
-        {/* The Component */}
-        <PaymentMethods selectedMethod={method} onSelectMethod={setMethod} />
-        
-      {/* </div>
-    </div> */}
+                  <PaymentMethods selectedMethod={method} onSelectMethod={setMethod} />
+                </div>
+
                 {/* Terms & Conditions */}
-                <div className="bg-brand-gray-lightest rounded-lg p-6 border border-brand-gray-border">
+                <div className="bg-brand-gray-lightest rounded-xl p-5 border border-brand-gray-border">
                   <div className="flex items-start gap-3">
                     <button
+                      type="button"
                       onClick={() => setAgreeTerms(!agreeTerms)}
-                      className={`flex-shrink-0 mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                      className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                         agreeTerms
                           ? "bg-brand-purple border-brand-purple"
-                          : "border-brand-gray-border hover:border-brand-purple"
+                          : "border-brand-gray-border hover:border-brand-purple bg-white"
                       }`}
                     >
-                      {agreeTerms && <Check size={16} className="text-white" />}
+                      {agreeTerms && <Check size={14} className="text-white" />}
                     </button>
                     <label className="text-sm text-brand-gray-dark cursor-pointer">
                       I agree to the{" "}
@@ -335,38 +360,38 @@ export default function CheckoutPayment() {
                       <span className="font-bold text-brand-purple hover:underline">
                         Privacy Policy
                       </span>
-                      , and{" "}
-                      <span className="font-bold text-brand-purple hover:underline">
-                        Return Policy
-                      </span>
+                      , and authorize this order.
                     </label>
-                  </div>
-                </div>
-
-                {/* Info Alert */}
-                <div className="flex gap-3 p-4 bg-blue-50 border border-brand-blue rounded-lg">
-                  <AlertCircle size={20} className="text-brand-blue flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-brand-blue">
-                    <p className="font-semibold">Secure Payment</p>
-                    <p className="mt-1">
-                      Your payment information is encrypted and secured using Razorpay.
-                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Order Summary - Right Column */}
+              {/* Right Column - Authoritative Breakdown */}
               <div className="lg:col-span-1">
                 <CheckoutSummary
-                  items={cartSummary.items}
-                  subtotal={cartSummary.subtotal}
-                  discount={cartSummary.discount}
-                  delivery={cartSummary.delivery}
-                  total={cartSummary.total}
+                  items={items.length}
+                  subtotal={pricing.subTotal}
+                  discount={pricing.discount}
+                  discountName={discountInfo.name}
+                  delivery={pricing.shipping}
+                  actualShippingCost={pricing.actualShippingCost}
+                  freeShippingApplied={shippingInfo.freeShippingApplied}
+                  courierName={shippingInfo.courier}
+                  estimatedDelivery={shippingInfo.estimatedDelivery}
+                  tax={pricing.tax}
+                  codCharge={pricing.codCharge}
+                  total={pricing.grandTotal}
+                  isLoading={isPreviewLoading}
+                  isServiceable={isServiceable}
+                  serviceabilityError={serviceabilityError}
                   onPlaceOrder={handlePlaceOrder}
                   isProcessing={isProcessing}
-                  isDisabled={!agreeTerms}
-                  buttonText={isProcessing ? "Processing..." : "Place Order"}
+                  isDisabled={!agreeTerms || !isServiceable || isPreviewLoading}
+                  buttonText={
+                    method === "cod"
+                      ? "Place COD Order"
+                      : `Pay ₹${pricing.grandTotal.toFixed(2)}`
+                  }
                   showSecondaryButton
                   onSecondaryClick={() => navigate("/shop")}
                 />

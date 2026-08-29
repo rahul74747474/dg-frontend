@@ -46,9 +46,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   /* ---------------- ADD ITEM ---------------- */
   const addMutation = useMutation({
     mutationFn: async (item: CartItem) => {
+      const targetId = item.id || (item as any).productId;
+      if (!targetId) {
+        throw new Error("Cannot add item to cart without a valid productId");
+      }
       return api.post("/cart/add", {
-        productId: item.id,
-        quantity: item.quantity,
+        productId: targetId,
+        quantity: item.quantity || 1,
       });
     },
     onSuccess: () => {

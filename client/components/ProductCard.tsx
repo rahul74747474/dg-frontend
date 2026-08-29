@@ -10,7 +10,7 @@ interface ProductCardProps {
   image: string;
   price: number;
   slug: string;
-  countInStock:number
+  countInStock?: number;
 }
 
 export default function ProductCard({
@@ -19,7 +19,7 @@ export default function ProductCard({
   image,
   price,
   slug,
-  countInStock
+  countInStock = 100,
 }: ProductCardProps) {
   const navigate = useNavigate();
   const { toggleItem, isInWishlist } = useWishlist();

@@ -26,13 +26,16 @@ console.log("📦 ORDER:", data.order);
 console.log("🚚 SHIPPING:", data.order?.shipping);
 
 setOrderData({
-  orderNumber: data.order._id,
-  date: new Date(data.order.createdAt).toLocaleDateString("en-IN"),
-  total: data.order.pricing?.grandTotal || 0,
-
-  shipmentId: data.order.shipping?.shipmentId,
-  awbCode: data.order.shipping?.awbCode,
-  courier: data.order.shipping?.courierName,
+  orderNumber: data.order.orderNumber || `#${data.order._id?.slice(-6)}`,
+  date: new Date(data.order.createdAt).toLocaleDateString("en-IN", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }),
+  total: data.order.pricing?.grandTotal ?? data.order.totalAmt ?? 0,
+  shipmentId: data.order.shipping?.shipmentId || data.order.shipmentDetails?.shipmentId,
+  awbCode: data.order.shipping?.awbCode || data.order.shipmentDetails?.awbCode,
+  courier: data.order.shipping?.courierName || data.order.shipmentDetails?.courier,
 });
         } else {
           // Fallback to placeholder data
