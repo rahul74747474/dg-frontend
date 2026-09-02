@@ -45,9 +45,9 @@ const categoryMap: Record<string, string> = {
 function BigHeader() {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { items: cartItems = [] } = useCart();
+  const { cartCount } = useCart();
   const { items: wishlistItems = [] } = useWishlist();
-  const { user, setUser, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -77,11 +77,7 @@ function BigHeader() {
   };
 
   const handleLogout = async () => {
-    try {
-      await api.post("/auth/logout");
-    } catch { }
-    localStorage.removeItem("token");
-    setUser(null);
+    await logout();
     navigate("/");
   };
 
@@ -108,12 +104,18 @@ function BigHeader() {
 
   {/* RIGHT - ICONS */}
   <div className="flex items-center gap-3">
-    <button onClick={() => navigate("/wishlist")}>
+    <button onClick={() => navigate("/wishlist")} className="relative">
       <Heart className="w-5 h-5" />
+      {wishlistItems?.length > 0 && (
+        <span className="badge">{wishlistItems.length}</span>
+      )}
     </button>
 
-    <button onClick={() => navigate("/cart")}>
+    <button onClick={() => navigate("/cart")} className="relative">
       <ShoppingCart className="w-5 h-5" />
+      {cartCount > 0 && (
+        <span className="badge">{cartCount}</span>
+      )}
     </button>
   </div>
 </div>
@@ -219,8 +221,8 @@ function BigHeader() {
               {/* CART */}
               <button onClick={() => navigate("/cart")} className="relative">
                 <ShoppingCart className="w-5 h-5" />
-                {cartItems?.length > 0 && (
-                  <span className="badge">{cartItems.length}</span>
+                {cartCount > 0 && (
+                  <span className="badge">{cartCount}</span>
                 )}
 
               </button>

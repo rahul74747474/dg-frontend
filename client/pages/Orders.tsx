@@ -39,6 +39,14 @@ interface Order {
     price: number;
     image?: string;
   }[];
+  shipping?: {
+    awbCode?: string;
+    courierName?: string;
+    shipmentId?: string;
+  };
+  shipmentDetails?: {
+    awbCode?: string;
+  };
 }
 
 export default function Orders() {
@@ -187,12 +195,26 @@ export default function Orders() {
                         </span>
                       </div>
 
-                      <button
-                        onClick={() => navigate("/order-success", { state: { orderId: order._id } })}
-                        className="text-sm font-semibold text-brand-purple hover:underline"
-                      >
-                        View Order Details →
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() =>
+                            navigate(
+                              order.shipping?.awbCode
+                                ? `/track-order?awb=${encodeURIComponent(order.shipping.awbCode)}`
+                                : `/track-order`
+                            )
+                          }
+                          className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-brand-purple text-xs font-semibold rounded-lg border border-purple-200 transition-colors cursor-pointer"
+                        >
+                          Track Order 🚚
+                        </button>
+                        <button
+                          onClick={() => navigate("/order-success", { state: { orderId: order._id } })}
+                          className="text-sm font-semibold text-brand-purple hover:underline"
+                        >
+                          View Details →
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

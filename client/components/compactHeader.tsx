@@ -28,9 +28,9 @@ const navItems = [
 
 export default function Header() {
   const navigate = useNavigate();
-  const { items: cartItems = [] } = useCart();
+  const { cartCount } = useCart();
   const { items: wishlistItems = [] } = useWishlist();
-  const { user, setUser, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,21 +58,15 @@ export default function Header() {
     if (!searchQuery.trim()) return;
     navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
     setIsSearchOpen(false);
-    setSearchQuery("");
   };
 
   const handleLogout = async () => {
-    try {
-      await api.post("/auth/logout");
-    } catch {}
-    localStorage.removeItem("token");
-    localStorage.removeItem("cart");
-    setUser(null);
+    await logout();
     navigate("/");
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b">
+    <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
       <Container>
 
         {/* ================= MOBILE HEADER ================= */}
@@ -83,7 +77,7 @@ export default function Header() {
             <Menu className="w-6 h-6" />
           </button>
 
-          {/* CENTER */}
+          {/* LOGO */}
           <Link to="/">
             <img
               src="https://i.ibb.co/rfKq4JJC/dg-logo.webp"
@@ -93,12 +87,18 @@ export default function Header() {
 
           {/* RIGHT */}
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/wishlist")}>
+            <button onClick={() => navigate("/wishlist")} className="relative">
               <Heart className="w-5 h-5" />
+              {wishlistItems?.length > 0 && (
+                <span className="badge">{wishlistItems.length}</span>
+              )}
             </button>
 
-            <button onClick={() => navigate("/cart")}>
+            <button onClick={() => navigate("/cart")} className="relative">
               <ShoppingCart className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className="badge">{cartCount}</span>
+              )}
             </button>
           </div>
         </div>
@@ -213,8 +213,8 @@ export default function Header() {
             {/* CART */}
             <button onClick={() => navigate("/cart")} className="relative">
               <ShoppingCart className="w-6 h-6" />
-              {cartItems.length > 0 && (
-                <span className="badge">{cartItems.length}</span>
+              {cartCount > 0 && (
+                <span className="badge">{cartCount}</span>
               )}
             </button>
 

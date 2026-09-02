@@ -30,38 +30,14 @@ interface AddressFormData {
   city: string;
   state: string;
   pincode: string;
+  country?: string;
   addressType: "home" | "office";
   saveAddress: boolean;
 }
 
 export default function CheckoutDelivery() {
   const navigate = useNavigate();
-  const [items, setItems] = useState([]);
-  const [total, setTotal] = useState(0);
-  
-    /* ---------- HANDLERS ---------- */
-  const fetchCart = async () => {
-    try {
-      const { data } = await api.get("/cart");
-      console.log("🔥 CART RESPONSE:", data);
-      setItems(data.cartItems);
-  
-      // calculate total
-      const totalAmount = data.cartItems.reduce(
-        (acc, item) => acc + item.productId.price * item.quantity,
-        0
-      );
-  
-      setTotal(totalAmount);
-  
-    } catch (error) {
-      console.error("Cart fetch error", error);
-    }
-  };
-  
-  useEffect(() => {
-    fetchCart();
-  }, []);
+  const { items: cartItems, total: cartTotal } = useCart();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
@@ -107,7 +83,7 @@ export default function CheckoutDelivery() {
         city: formData.city,
         state: formData.state,
         pincode: formData.pincode,
-        country: "India",
+        country: formData.country || "India",
         mobile: formData.phone,
       };
 
@@ -141,15 +117,16 @@ export default function CheckoutDelivery() {
     }
 
     const selectedAddr = addresses.find((a) => a._id === selectedAddressId);
-    console.log(selectedAddr)
-    sessionStorage.setItem("deliveryAddressId", selectedAddr._id);
+    if (selectedAddr?._id) {
+      sessionStorage.setItem("deliveryAddressId", selectedAddr._id);
+    }
     navigate("/checkout/payment");
   };
 
   const cartSummary = {
-    items: items.length,
-    subtotal: total,
-    total: total,
+    items: cartItems.length,
+    subtotal: cartTotal,
+    total: cartTotal,
   };
 
   return (

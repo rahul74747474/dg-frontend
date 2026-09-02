@@ -183,20 +183,19 @@ const sortedReviews = useMemo(() => {
 };
 
   const handleAddToCart = async () => {
-  try {
-    addItem({
-  id: product._id,
-  name: product.name,
-  price: finalPrice,
-  image: product.images[0],
-  quantity,
-});
-    toast.success("Added to cart 🛒");
-
-  } catch (err) {
-    toast.error("Failed to add to cart");
-  }
-};
+    try {
+      await addItem({
+        id: product._id,
+        name: product.name,
+        price: finalPrice,
+        image: product.images?.[0] || "",
+        quantity,
+      });
+      toast.success("Added to cart 🛒");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to add to cart");
+    }
+  };
   /* --------------------------------- UI ----------------------------------- */
 
   return (

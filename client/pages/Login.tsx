@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
-import { Link, useNavigate, Navigate } from "react-router-dom";
+import { Link, useNavigate, Navigate, useLocation } from "react-router-dom";
 
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -11,6 +11,7 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, setUser } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -21,6 +22,11 @@ export default function Login() {
 
   // ✅ Already logged in
   if (user) {
+    const savedRedirect = sessionStorage.getItem("redirectAfterLogin");
+    if (savedRedirect) {
+      sessionStorage.removeItem("redirectAfterLogin");
+      return <Navigate to={savedRedirect} replace />;
+    }
     return <Navigate to="/" replace />;
   }
 
@@ -40,7 +46,12 @@ export default function Login() {
       localStorage.setItem("token", res.data.token);
       setUser(res.data.user);
 
-      navigate("/");
+      // Check for saved post-login destination
+      const savedRedirect = sessionStorage.getItem("redirectAfterLogin");
+      sessionStorage.removeItem("redirectAfterLogin");
+      const targetDestination = location.state?.from || savedRedirect || "/";
+
+      navigate(targetDestination, { replace: true });
     } catch (err: any) {
       setError(
         err?.response?.data?.message || "Invalid email or password"

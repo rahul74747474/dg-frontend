@@ -231,10 +231,13 @@ setOrderData({
               {/* Actions */}
               <div className="space-y-3 pt-6 border-t border-brand-gray-border">
                 <button
-                  onClick={() => navigate("/track-order")}
-                  className="w-full px-6 py-3 bg-brand-purple text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                  onClick={() => {
+                    const awb = orderData?.awbCode || orderData?.shipping?.awbCode;
+                    navigate(awb ? `/track-order?awb=${encodeURIComponent(awb)}` : `/track-order`);
+                  }}
+                  className="w-full px-6 py-3 bg-brand-purple text-white font-semibold rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
                 >
-                  Track Your Order
+                  Track Your Shipment
                 </button>
                 <button
                   onClick={() => navigate("/shop")}
