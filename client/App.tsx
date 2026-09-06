@@ -1,7 +1,7 @@
 import "./global.css";
 
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
@@ -18,7 +18,7 @@ import { ScrollProvider } from "./context/scrollContext";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Pages
+// Existing Pages
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
@@ -47,7 +47,32 @@ import Account from "./pages/Account";
 import Orders from "@/pages/Orders";
 import AddressPage from "@/pages/Address";
 
+// New Pages
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import Careers from "./pages/Careers";
+import FAQ from "./pages/FAQ";
+import Returns from "./pages/Returns";
+import Shipping from "./pages/Shipping";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Disclaimer from "./pages/Disclaimer";
+import Accessibility from "./pages/Accessibility";
+import Unsubscribe from "./pages/Unsubscribe";
+import AdminNewsletter from "./pages/AdminNewsletter";
+
 const queryClient = new QueryClient();
+
+// Scroll to top helper on route change
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+
+  return null;
+}
 
 const App = () => {
   useEffect(() => {
@@ -65,16 +90,17 @@ const App = () => {
           <WishlistProvider>
             <TooltipProvider>
               <Toaster />
-              <Sonner />
+              <Sonner richColors position="top-right" />
 
               <ScrollProvider>
                 <BrowserRouter>
+                  <ScrollToTop />
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/shop" element={<Shop />} />
                     <Route path="/product/:slug" element={<ProductDetail />} />
 
-                    {/* 🔐 Protected */}
+                    {/* 🔐 Protected Routes */}
                     <Route
                       path="/cart"
                       element={
@@ -115,10 +141,45 @@ const App = () => {
                         </ProtectedRoute>
                       }
                     />
+                    <Route
+                      path="/account"
+                      element={
+                        <ProtectedRoute>
+                          <Account />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/orders"
+                      element={
+                        <ProtectedRoute>
+                          <Orders />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/address"
+                      element={
+                        <ProtectedRoute>
+                          <AddressPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/newsletter"
+                      element={
+                        <ProtectedRoute requiredRole="ADMIN">
+                          <AdminNewsletter />
+                        </ProtectedRoute>
+                      }
+                    />
 
-                    {/* Auth */}
+                    {/* Auth Routes */}
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/verifyEmail" element={<VerifyEmail />} />
 
                     {/* Categories */}
                     <Route path="/category/makhana" element={<CategoryMakhana />} />
@@ -135,25 +196,34 @@ const App = () => {
                       element={<CategoryWeightLoss />}
                     />
 
-                    {/* Static */}
+                    {/* Shop & Combos */}
                     <Route path="/combos" element={<Combos />} />
                     <Route path="/offers" element={<Offers />} />
+
+                    {/* Company Pages */}
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
+                    <Route path="/careers" element={<Careers />} />
+
+                    {/* Support Pages */}
                     <Route path="/track-order" element={<TrackOrder />} />
+                    <Route path="/faq" element={<FAQ />} />
+                    <Route path="/returns" element={<Returns />} />
+                    <Route path="/shipping" element={<Shipping />} />
                     <Route path="/b2b" element={<B2B />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-<Route path="/reset-password" element={<ResetPassword />} />
-<Route path="/verifyEmail" element={<VerifyEmail />} />
-<Route path="/account" element={<Account />} />
 
-<Route path="/orders" element={<Orders />} />
+                    {/* Legal Pages */}
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/disclaimer" element={<Disclaimer />} />
+                    <Route path="/accessibility" element={<Accessibility />} />
 
-<Route path="/address" element={<AddressPage />} />
+                    {/* Newsletter & Unsubscribe */}
+                    <Route path="/unsubscribe" element={<Unsubscribe />} />
 
-
-
-
+                    {/* 404 Handler */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </BrowserRouter>

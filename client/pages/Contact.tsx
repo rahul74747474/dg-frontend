@@ -191,9 +191,9 @@ export default function Contact() {
 
               <div className="space-y-6">
                 
-                <Info icon={<Mail />} title="Email" text="support@desiiglobal.com" />
+                <Info icon={<Mail />} title="Email" text="info@desiiglobal.com" />
                 <Info icon={<Phone />} title="Phone" text="+91 98765 43210" />
-                <Info icon={<MapPin />} title="Address" text="Mumbai, India" />
+                <Info icon={<MapPin />} title="Address" text="Madhepura, Bihar, India" />
                 <Info icon={<Clock />} title="Hours" text="Mon - Sat, 10AM - 6PM" />
 
               </div>
@@ -228,26 +228,25 @@ export default function Contact() {
         </Container>
 
          <section className="bg-brand-gray-lightest">
-          <Container>
-            <div className="py-12">
-              <h2 className="text-2xl font-bold text-brand-purple-dark mb-6 text-center">
-                Visit Us
-              </h2>
-              <div className="w-full h-96 bg-gray-300 rounded-lg flex items-center justify-center border border-brand-gray-border">
-                <div className="text-center">
-                  <div className="text-5xl mb-3">🗺️</div>
-                  <p className="text-brand-gray font-semibold">
-                    Interactive Map Placeholder
-                  </p>
-                  <p className="text-sm text-brand-gray-light">
-                    Google Maps or similar integration can be added here
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Container>
-        </section>
+  <Container>
+    <div className="py-12">
+      <h2 className="text-2xl font-bold text-brand-purple-dark mb-6 text-center">
+        Visit Us
+      </h2>
 
+      <div className="w-full h-96 rounded-lg overflow-hidden border border-brand-gray-border">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d224.27138907714297!2d86.7944100497736!3d25.924005061857923!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMjXCsDU1JzI2LjMiTiA4NsKwNDcnNDAuNyJF!5e0!3m2!1sen!2sin!4v1788722454996!5m2!1sen!2sin"
+          className="w-full h-full border-0"
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+          title="DesiiGlobal Location - Madhepura, Bihar"
+        />
+      </div>
+    </div>
+  </Container>
+</section>
         {/* FAQ Section */}
         <Container>
           <section className="py-12">

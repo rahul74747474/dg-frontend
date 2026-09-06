@@ -1,310 +1,228 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Container from "@/components/ui/container";
+import { Link } from "react-router-dom";
 import {
-  SparklesIcon,
-  EyeIcon,
-  CurrencyRupeeIcon,
-  MagnifyingGlassIcon,
-  TruckIcon,
-  CheckIcon,
-  HeartIcon,
-  ArrowPathIcon,
-  ShieldCheckIcon,
-} from "@heroicons/react/24/outline";
+  ShieldCheck,
+  Award,
+  Leaf,
+  Heart,
+  Sparkles,
+  CheckCircle2,
+  ArrowRight,
+  Flame,
+  Truck,
+  Layers,
+} from "lucide-react";
+import { aboutContent } from "@/data";
+
+const iconMap = {
+  ShieldCheck: ShieldCheck,
+  Award: Award,
+  Leaf: Leaf,
+  Heart: Heart,
+  Sparkles: Sparkles,
+  RefreshCw: Layers,
+};
 
 export default function About() {
+  const { hero, story, missionVision, pillars, values, cta } = aboutContent;
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#FCFCFD]">
       <Header />
+
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="bg-brand-peach-bg">
+        {/* ================= HERO SECTION ================= */}
+        <section className="bg-gradient-to-b from-brand-peach-bg via-[#FFF5ED] to-[#FCFCFD] py-16 md:py-20 border-b border-orange-100/50">
           <Container>
-            <div className="py-16 text-center">
-              <h1 className="text-4xl md:text-5xl font-bold text-brand-purple-dark mb-4">
-                About DesiiGlobal
+            <div className="max-w-3xl mx-auto text-center">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-purple/10 text-brand-purple mb-4">
+                <Sparkles size={14} /> {hero.badge}
+              </span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-brand-purple-dark tracking-tight mb-6">
+                {hero.title}
               </h1>
-              <p className="text-lg text-brand-gray max-w-2xl mx-auto">
-                Bringing organic wellness to your doorstep with transparency, quality, and care.
+              <p className="text-base md:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
+                {hero.subtitle}
               </p>
             </div>
           </Container>
         </section>
 
-        {/* Brand Story */}
-        <Container>
-          <section className="py-16 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-brand-purple-dark mb-4">
-                Our Story
-              </h2>
-              <p className="text-brand-gray mb-4 leading-relaxed">
-                DesiiGlobal was founded with a simple mission: to make premium organic wellness
-                products accessible to everyone. We started with a belief that health should not be
-                a luxury, and quality should never be compromised.
-              </p>
-              <p className="text-brand-gray mb-4 leading-relaxed">
-                What began as a small venture has grown into a community of health-conscious
-                individuals who trust us to deliver pure, authentic, and nutritious products.
-                Every product in our catalog is carefully selected and tested to ensure it meets
-                our strict quality standards.
-              </p>
-              <p className="text-brand-gray leading-relaxed">
-                Today, DesiiGlobal is proud to serve thousands of customers across India, bringing
-                wellness products directly from farms to families.
-              </p>
-            </div>
-            <div className="bg-white rounded-lg aspect-square flex items-center justify-center">
-             
-                  <img src="https://i.ibb.co/RksxY8v7/Whats-App-Image-2026-03-08-at-17-21-43.webp"/>
-              
-            </div>
-          </section>
-        </Container>
-
-        {/* Mission & Vision */}
-        <section className="bg-brand-gray-lightest py-16">
+        {/* ================= STORY SECTION ================= */}
+        <section className="py-16 md:py-24">
           <Container>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              <div className="bg-white p-8 rounded-lg border border-brand-gray-border">
-                <div className="w-20 h-20 mx-auto flex items-center justify-center rounded-full bg-brand-green-lighter">
-                  <ShieldCheckIcon className="w-10 h-10 text-brand-primary" />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+              <div className="lg:col-span-7 space-y-6">
+                <div className="inline-block px-3 py-1 bg-green-50 text-brand-green text-xs font-bold uppercase tracking-wider rounded-lg">
+                  Who We Are
                 </div>
-                <h3 className="text-2xl font-bold text-brand-purple-dark mb-4">
-                  Our Mission
-                </h3>
-                <p className="text-brand-gray leading-relaxed">
-                  To empower individuals to lead healthier, more sustainable lives by providing
-                  authentic, organic wellness products that are responsibly sourced and
-                  transparently shared with our community.
-                </p>
+                <h2 className="text-3xl md:text-4xl font-black text-brand-purple-dark tracking-tight">
+                  {story.heading}
+                </h2>
+                <div className="space-y-4 text-gray-600 leading-relaxed text-base md:text-lg">
+                  {story.paragraphs.map((p, idx) => (
+                    <p key={idx}>{p}</p>
+                  ))}
+                </div>
+
+                <div className="pt-4 flex flex-wrap gap-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 bg-white border border-gray-100 shadow-sm px-4 py-2.5 rounded-xl">
+                    <CheckCircle2 className="w-5 h-5 text-brand-green" /> 100% Roasted
+                  </div>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 bg-white border border-gray-100 shadow-sm px-4 py-2.5 rounded-xl">
+                    <CheckCircle2 className="w-5 h-5 text-brand-green" /> Zero Trans Fat
+                  </div>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 bg-white border border-gray-100 shadow-sm px-4 py-2.5 rounded-xl">
+                    <CheckCircle2 className="w-5 h-5 text-brand-green" /> FSSAI Certified
+                  </div>
+                </div>
               </div>
-              <div className="bg-white p-8 rounded-lg border border-brand-gray-border">
-                <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center rounded-full bg-brand-green-lighter">
-                  <EyeIcon className="w-10 h-10 text-brand-primary" />
+
+              <div className="lg:col-span-5">
+                <div className="relative">
+                  <div className="absolute -inset-4 bg-gradient-to-tr from-brand-purple/20 to-brand-green/20 rounded-3xl blur-2xl opacity-60"></div>
+                  <div className="relative rounded-3xl overflow-hidden bg-white border border-gray-100 shadow-xl shadow-brand-purple/5 p-3">
+                    <img
+                      src={story.image}
+                      alt="DesiiGlobal Story & Snacks"
+                      className="w-full aspect-square object-cover rounded-2xl"
+                    />
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-brand-purple-dark mb-4">
-                  Our Vision
-                </h3>
-                <p className="text-brand-gray leading-relaxed">
-                  To become the most trusted brand for organic wellness products in India, where
-                  every customer feels confident that they're investing in their health with
-                  products backed by quality, transparency, and care.
-                </p>
               </div>
             </div>
           </Container>
         </section>
 
-        {/* Why We Started */}
-        <Container>
-          <section className="py-16">
-            <h2 className="text-3xl font-bold text-brand-purple-dark text-center mb-12">
-              Why We Started
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brand-green-lighter flex items-center justify-center text-2xl">
-                
-                    <CurrencyRupeeIcon className="w-8 h-8 text-brand-green" />
-                  </div> 
-                <h4 className="font-bold text-brand-blue-dark mb-2">
-                  Affordability Crisis
-                </h4>
-                <p className="text-sm text-brand-gray-light">
-                  Organic products were expensive and out of reach for many families looking
-                  to improve their health.
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brand-green-lighter flex items-center justify-center text-2xl">
-                  
-                    <MagnifyingGlassIcon className="w-8 h-8 text-brand-green" />
-                  
-                </div>
-                <h4 className="font-bold text-brand-blue-dark mb-2">
-                  Trust Issues
-                </h4>
-                <p className="text-sm text-brand-gray-light">
-                  Many "organic" products lacked proper certifications and transparent sourcing
-                  information.
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brand-green-lighter flex items-center justify-center text-2xl">
-                 
-                    <TruckIcon className="w-8 h-8 text-brand-green" />
-                
-                </div>
-                <h4 className="font-bold text-brand-blue-dark mb-2">
-                  Accessibility Gap
-                </h4>
-                <p className="text-sm text-brand-gray-light">
-                  Quality organic products were not easily available online with reliable delivery
-                  and customer support.
-                </p>
-              </div>
-            </div>
-          </section>
-        </Container>
-
-        {/* Sourcing & Quality Promise */}
-        <section className="bg-brand-peach-bg py-16">
+        {/* ================= MISSION & VISION ================= */}
+        <section className="py-16 bg-brand-gray-lightest border-y border-gray-200/60">
           <Container>
-            <h2 className="text-3xl font-bold text-brand-purple-dark text-center mb-12">
-              Sourcing & Quality Promise
-            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-green text-white text-xl">
-                    <CheckIcon className="w-6 h-6" />
-                  </div>
+              {/* Mission Card */}
+              <div className="bg-white p-8 md:p-10 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-14 h-14 rounded-2xl bg-brand-purple/10 flex items-center justify-center text-brand-purple mb-6">
+                  <ShieldCheck size={28} />
                 </div>
-                <div>
-                  <h4 className="font-bold text-brand-blue-dark mb-2">
-                    Direct Farm Partnerships
-                  </h4>
-                  <p className="text-sm text-brand-gray-light">
-                    We work directly with certified organic farms, eliminating middlemen and
-                    ensuring transparency from source to your doorstep.
-                  </p>
-                </div>
+                <h3 className="text-2xl font-bold text-brand-purple-dark mb-4">
+                  {missionVision.mission.title}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {missionVision.mission.description}
+                </p>
               </div>
-              <div className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-green text-white text-xl">
-                    <CheckIcon className="w-6 h-6" />
-                  </div>
+
+              {/* Vision Card */}
+              <div className="bg-white p-8 md:p-10 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-14 h-14 rounded-2xl bg-brand-green/10 flex items-center justify-center text-brand-green mb-6">
+                  <Leaf size={28} />
                 </div>
-                <div>
-                  <h4 className="font-bold text-brand-blue-dark mb-2">
-                    Lab Testing
-                  </h4>
-                  <p className="text-sm text-brand-gray-light">
-                    Every batch is tested in certified laboratories for pesticides, heavy metals,
-                    and nutritional content.
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-green text-white text-xl">
-                    <CheckIcon className="w-6 h-6" />
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-bold text-brand-blue-dark mb-2">
-                    No Preservatives
-                  </h4>
-                  <p className="text-sm text-brand-gray-light">
-                    100% natural products with no artificial additives, colors, or preservatives.
-                    What you see is what you get.
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-green text-white text-xl">
-                    <CheckIcon className="w-6 h-6" />
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-bold text-brand-blue-dark mb-2">
-                    Fresh Packing
-                  </h4>
-                  <p className="text-sm text-brand-gray-light">
-                    Products are freshly packed to maintain maximum nutritional value and taste.
-                    Quality you can taste and feel.
-                  </p>
-                </div>
+                <h3 className="text-2xl font-bold text-brand-purple-dark mb-4">
+                  {missionVision.vision.title}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {missionVision.vision.description}
+                </p>
               </div>
             </div>
           </Container>
         </section>
 
-        {/* Brand Values */}
-        <Container>
-          <section className="py-16">
-            <h2 className="text-3xl font-bold text-brand-purple-dark text-center mb-12">
-              Our Brand Values
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white p-6 rounded-lg border border-brand-gray-border text-center">
-                <div className="text-4xl mb-3"><div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center rounded-full bg-brand-green-lighter"><ArrowPathIcon className="w-8 h-8 text-brand-primary" /></div></div>
-                <h4 className="font-bold text-brand-blue-dark mb-2">Transparency</h4>
-                <p className="text-sm text-brand-gray-light">
-                  We openly share our sourcing, testing, and production processes.
-                </p>
-              </div>
-              <div className="bg-white p-6 rounded-lg border border-brand-gray-border text-center">
-                <div className="text-4xl mb-3"><div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center rounded-full bg-brand-green-lighter"><ShieldCheckIcon className="w-8 h-8 text-brand-primary" /></div></div>
-                <h4 className="font-bold text-brand-blue-dark mb-2">Quality</h4>
-                <p className="text-sm text-brand-gray-light">
-                  We never compromise on quality, even if it means higher costs.
-                </p>
-              </div>
-              <div className="bg-white p-6 rounded-lg border border-brand-gray-border text-center">
-                <div className="text-4xl mb-3"><div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center rounded-full bg-brand-green-lighter"><ArrowPathIcon className="w-8 h-8 text-brand-primary" /></div></div>
-                <h4 className="font-bold text-brand-blue-dark mb-2">Sustainability</h4>
-                <p className="text-sm text-brand-gray-light">
-                  We promote eco-friendly practices throughout our supply chain.
-                </p>
-              </div>
-              <div className="bg-white p-6 rounded-lg border border-brand-gray-border text-center">
-                <div className="text-4xl mb-3"><div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center rounded-full bg-brand-green-lighter"><HeartIcon className="w-8 h-8 text-brand-primary" /></div></div>
-                <h4 className="font-bold text-brand-blue-dark mb-2">Care</h4>
-                <p className="text-sm text-brand-gray-light">
-                  Your health and satisfaction are at the heart of everything we do.
-                </p>
-              </div>
-            </div>
-          </section>
-        </Container>
-
-        {/* Stats Section */}
-        <section className="bg-brand-blue text-white py-16">
+        {/* ================= 4 PILLARS SECTION ================= */}
+        <section className="py-16 md:py-24">
           <Container>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-              <div>
-                <div className="text-4xl font-bold mb-2">50K+</div>
-                <p className="text-opacity-90">Happy Customers</p>
-              </div>
-              <div>
-                <div className="text-4xl font-bold mb-2">500+</div>
-                <p className="text-opacity-90">Partner Farms</p>
-              </div>
-              <div>
-                <div className="text-4xl font-bold mb-2">100%</div>
-                <p className="text-opacity-90">Organic Products</p>
-              </div>
-              <div>
-                <div className="text-4xl font-bold mb-2">5⭐</div>
-                <p className="text-opacity-90">Customer Rating</p>
-              </div>
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-purple block mb-2">
+                Why DesiiGlobal
+              </span>
+              <h2 className="text-3xl md:text-4xl font-black text-brand-purple-dark tracking-tight">
+                Our Approach to Healthy Snacking
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {pillars.map((pillar, i) => (
+                <div
+                  key={pillar.id}
+                  className="bg-white p-7 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:shadow-brand-purple/5 transition-all duration-300 hover:-translate-y-1"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-brand-peach-bg text-brand-purple-dark font-black flex items-center justify-center text-lg mb-5">
+                    0{i + 1}
+                  </div>
+                  <h4 className="text-lg font-bold text-gray-900 mb-2">
+                    {pillar.title}
+                  </h4>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    {pillar.description}
+                  </p>
+                </div>
+              ))}
             </div>
           </Container>
         </section>
 
-        {/* Contact CTA */}
-        <Container>
-          <section className="py-16 text-center">
-            <h2 className="text-3xl font-bold text-brand-purple-dark mb-4">
-              Get in Touch
-            </h2>
-            <p className="text-brand-gray max-w-2xl mx-auto mb-8">
-              Have questions about our products, sourcing, or anything else? We'd love to hear from you!
-            </p>
-            <a
-              href="/contact"
-              className="inline-block px-8 py-3 bg-brand-purple text-white font-semibold rounded-md hover:opacity-90 transition-opacity"
-            >
-              Contact Us
-            </a>
-          </section>
-        </Container>
+        {/* ================= VALUES SECTION ================= */}
+        <section className="py-16 bg-[#F9FAFB] border-t border-gray-100">
+          <Container>
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-green block mb-2">
+                Core Principles
+              </span>
+              <h2 className="text-3xl md:text-4xl font-black text-brand-purple-dark tracking-tight">
+                What We Stand For
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {values.map((val) => {
+                const IconComponent = iconMap[val.iconName] || ShieldCheck;
+                return (
+                  <div
+                    key={val.id}
+                    className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm text-center flex flex-col items-center"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-brand-green/10 flex items-center justify-center text-brand-green mb-4">
+                      <IconComponent size={26} />
+                    </div>
+                    <h4 className="text-lg font-bold text-brand-blue-dark mb-2">
+                      {val.title}
+                    </h4>
+                    <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
+                      {val.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </Container>
+        </section>
+
+        {/* ================= CTA BANNER ================= */}
+        <section className="py-16 md:py-20">
+          <Container>
+            <div className="bg-gradient-to-r from-brand-purple-dark via-[#4B2F83] to-brand-purple rounded-3xl p-8 md:p-14 text-white text-center relative overflow-hidden shadow-xl shadow-brand-purple/20">
+              <div className="relative z-10 max-w-2xl mx-auto space-y-6">
+                <h2 className="text-3xl md:text-4xl font-black tracking-tight">
+                  {cta.title}
+                </h2>
+                <p className="text-white/80 text-base md:text-lg">
+                  {cta.description}
+                </p>
+                <div className="pt-2">
+                  <Link
+                    to={cta.buttonLink}
+                    className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-brand-purple-dark hover:bg-brand-peach-bg font-bold rounded-xl transition-all shadow-lg hover:scale-105 active:scale-95"
+                  >
+                    {cta.buttonText} <ArrowRight size={18} />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </Container>
+        </section>
       </main>
+
       <Footer />
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Camera, LogOut, User, Package, Settings, Edit2, AlertCircle, Eye, EyeOff, Check } from "lucide-react";
+import { Camera, LogOut, User, Package, Settings, Edit2, AlertCircle, Eye, EyeOff, Check, Mail } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -365,6 +365,16 @@ const handleUpdateAddress = async () => {
                       <Settings size={20} />
                       <span className="font-semibold">Change Password</span>
                     </button>
+
+                    {user?.role === "ADMIN" && (
+                      <button
+                        onClick={() => navigate("/admin/newsletter")}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-brand-purple/10 text-brand-purple hover:bg-brand-purple hover:text-white transition-colors font-semibold mt-2"
+                      >
+                        <Mail size={20} />
+                        <span>Newsletter Admin</span>
+                      </button>
+                    )}
                   </nav>
 
                   {/* Logout Button */}

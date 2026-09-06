@@ -48,3 +48,23 @@ export {
   type B2BForm,
   type B2BBenefit,
 } from "./commerce";
+
+// Pages Content & Legal Policies
+export {
+  aboutContent,
+  blogContent,
+  blogCategories,
+  blogPosts,
+  careersContent,
+  faqContent,
+  returnsContent,
+  shippingContent,
+  privacyContent,
+  termsContent,
+  disclaimerContent,
+  accessibilityContent,
+  type BlogPost,
+  type JobOpening,
+  type FAQCategory,
+  type FAQItem,
+} from "./pagesContent";

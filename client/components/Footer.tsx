@@ -21,19 +21,25 @@ export default function Footer() {
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newsletter.trim()) {
+    const cleanEmail = newsletter.trim();
+    if (!cleanEmail) {
       toast.error("Please enter your email address");
+      return;
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(cleanEmail)) {
+      toast.error("Please enter a valid email address");
       return;
     }
 
     try {
       setIsSubscribing(true);
-      // Subscribe to newsletter - adjust API call if needed
-      await api.post("/newsletter/subscribe", { email: newsletter });
-      toast.success("Thank you for subscribing!");
+      const res = await api.post("/newsletter/subscribe", { email: cleanEmail });
+      toast.success(res.data?.message || "Thank you for subscribing to DesiiGlobal updates!");
       setNewsletter("");
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to subscribe");
+      toast.error(err?.response?.data?.message || "Failed to subscribe. Please try again.");
     } finally {
       setIsSubscribing(false);
     }
@@ -60,7 +66,7 @@ export default function Footer() {
             </div>
             <div>
               <h4 className="font-semibold text-white">Free Delivery</h4>
-              <p className="text-sm text-brand-gray-light">On orders above ₹499</p>
+              <p className="text-sm text-brand-gray-light">On orders above ₹999</p>
             </div>
           </div>
           <div className="flex items-center gap-4 text-center md:text-left">
@@ -213,14 +219,7 @@ export default function Footer() {
                   Blog
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/careers"
-                  className="text-brand-gray-light hover:text-brand-purple transition-colors"
-                >
-                  Careers
-                </Link>
-              </li>
+             
             </ul>
           </div>
 
@@ -313,7 +312,7 @@ export default function Footer() {
                 href="mailto:support@desiiglobal.com"
                 className="text-brand-gray-light hover:text-brand-purple transition-colors"
               >
-                support@desiiglobal.com
+                info@desiiglobal.com
               </a>
             </div>
           </div>
@@ -334,7 +333,7 @@ export default function Footer() {
             <div>
               <h4 className="font-semibold text-white mb-1">Location</h4>
               <p className="text-brand-gray-light text-sm">
-                New Delhi, India
+                Madhepura Bihar, India
               </p>
             </div>
           </div>
