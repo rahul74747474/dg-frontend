@@ -143,10 +143,15 @@ export default function CheckoutPayment() {
       });
 
       const razorpayOrder = data.order;
+      const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+      console.log(razorpayKey);
 
+if (!razorpayKey) {
+  throw new Error("VITE_RAZORPAY_KEY_ID is missing");
+}
       // Step 2: Open Razorpay Gateway Modal
       const result = await initializeRazorpayPayment({
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_placeholder",
+        key: razorpayKey,
         amount: razorpayOrder.amount,
         currency: "INR",
         name: "DesiiGlobal",
