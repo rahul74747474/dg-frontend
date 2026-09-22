@@ -11,7 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function Account() {
   const navigate = useNavigate();
-  const { user, loading, setUser } = useAuth();
+  const { user, loading, setUser, logout } = useAuth();
   const [userData, setUserData] = useState<any>(null);
   const [userLoading, setUserLoading] = useState(true);
   const [orders, setOrders] = useState([]);
@@ -306,11 +306,7 @@ const handleUpdateAddress = async () => {
   };
 
   const handleLogout = async () => {
-    try {
-      await api.post("/auth/logout");
-    } catch { }
-    localStorage.removeItem("token");
-    setUser(null);
+    await logout();
     navigate("/");
   };
 

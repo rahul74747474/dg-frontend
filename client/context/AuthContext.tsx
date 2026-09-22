@@ -6,6 +6,7 @@ import {
   useContext,
   useCallback,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import api, { setSessionExpiredHandler } from "../api/axios";
 import SessionExpiredModal from "../components/SessionExpiredModal";
 
@@ -54,6 +55,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSessionExpired, setIsSessionExpired] = useState(false);
+  const queryClient = useQueryClient();
 
   // Logout handler
   const logout = useCallback(async () => {
@@ -64,15 +66,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } finally {
       localStorage.removeItem("token");
       setUser(null);
+      queryClient.removeQueries({ queryKey: ["cart"] });
     }
-  }, []);
+  }, [queryClient]);
 
   // Session expired handler triggered by global axios interceptor
   const handleSessionExpired = useCallback(() => {
     localStorage.removeItem("token");
     setUser(null);
+    queryClient.removeQueries({ queryKey: ["cart"] });
     setIsSessionExpired(true);
-  }, []);
+  }, [queryClient]);
 
   const handleLoginAgain = useCallback(() => {
     setIsSessionExpired(false);

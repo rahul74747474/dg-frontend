@@ -5,12 +5,10 @@ import Footer from "@/components/Footer";
 import Container from "@/components/ui/container";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
-import { useState,useEffect} from "react";
-import api from "@/api/axios";
 
 export default function Cart() {
   const navigate = useNavigate();
-const { items, removeItem, updateQuantity, total } = useCart();
+  const { items, removeItem, updateQuantity, total, isLoading } = useCart();
 
   /* ---------- HANDLERS ---------- */
 
@@ -40,8 +38,18 @@ const { items, removeItem, updateQuantity, total } = useCart();
           </Container>
         </section>
 
-        {/* EMPTY CART */}
-        {isEmpty ? (
+        {/* LOADING STATE */}
+        {isLoading ? (
+          <section className="py-20 text-center">
+            <Container>
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="w-10 h-10 border-4 border-brand-purple border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-gray-500 text-sm">Loading your cart items...</p>
+              </div>
+            </Container>
+          </section>
+        ) : isEmpty ? (
+          /* EMPTY CART */
           <section className="py-20 text-center">
             <Container>
               <div className="flex flex-col items-center gap-6">

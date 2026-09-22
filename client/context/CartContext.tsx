@@ -9,6 +9,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/api/axios";
 import { toast } from "sonner";
+import { useAuth } from "./AuthContext";
 
 export interface CartItem {
   id: string;
@@ -36,6 +37,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
   // Debounce timers for per-item rapid quantity updates
@@ -43,13 +45,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Confirmed snapshot prior to rapid clicking sequence for rollback
   const confirmedSnapshots = useRef<Record<string, number>>({});
 
-  /* ---------------- FETCH CART ---------------- */
-  const { data, isLoading } = useQuery({
-    queryKey: ["cart"],
-    queryFn: async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return [];
+  // User-isolated React Query key
+  const cartQueryKey = useMemo(
+    () => ["cart", user?._id || "anonymous"] as const,
+    [user?._id]
+  );
 
+  /* ---------------- FETCH CART ---------------- */
+  const { data, isLoading: isCartLoading } = useQuery({
+    queryKey: cartQueryKey,
+    queryFn: async () => {
       const res = await api.get("/cart");
       if (!res.data?.cartItems || !Array.isArray(res.data.cartItems)) {
         return [];
@@ -68,10 +73,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           quantity: Math.max(1, Number(item.quantity) || 1),
         }));
     },
+    enabled: !authLoading && isAuthenticated && Boolean(user?._id),
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
 
-  const items: CartItem[] = data || [];
+  const items: CartItem[] =
+    isAuthenticated && Boolean(user?._id) && data ? data : [];
+
+  const isLoading =
+    authLoading || (isAuthenticated && Boolean(user?._id) && isCartLoading);
 
   /* ---------------- ADD ITEM (OPTIMISTIC) ---------------- */
   const addMutation = useMutation({
@@ -88,10 +98,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     },
     onMutate: async (newItem: CartItem) => {
       // Cancel any outgoing refetches so they don't overwrite optimistic update
-      await queryClient.cancelQueries({ queryKey: ["cart"] });
+      await queryClient.cancelQueries({ queryKey: cartQueryKey });
 
       // Snapshot previous cart state for rollback
-      const previousCart = queryClient.getQueryData<CartItem[]>(["cart"]) || [];
+      const previousCart =
+        queryClient.getQueryData<CartItem[]>(cartQueryKey) || [];
 
       const targetId = newItem.id || (newItem as any).productId;
       const existingItemIndex = previousCart.findIndex((i) => i.id === targetId);
@@ -118,14 +129,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Optimistically update cache immediately (0ms lag for navbar and cart)
-      queryClient.setQueryData<CartItem[]>(["cart"], updatedCart);
+      queryClient.setQueryData<CartItem[]>(cartQueryKey, updatedCart);
 
       return { previousCart };
     },
     onError: (err: any, _newItem, context) => {
       // Rollback to previous confirmed state
       if (context?.previousCart) {
-        queryClient.setQueryData(["cart"], context.previousCart);
+        queryClient.setQueryData(cartQueryKey, context.previousCart);
       }
       toast.error(err.response?.data?.message || "Failed to add item to cart");
     },
@@ -147,11 +158,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return api.delete("/cart/remove", { data: { productId: id } });
     },
     onMutate: async (id: string) => {
-      await queryClient.cancelQueries({ queryKey: ["cart"] });
-      const previousCart = queryClient.getQueryData<CartItem[]>(["cart"]) || [];
+      await queryClient.cancelQueries({ queryKey: cartQueryKey });
+      const previousCart =
+        queryClient.getQueryData<CartItem[]>(cartQueryKey) || [];
 
       queryClient.setQueryData<CartItem[]>(
-        ["cart"],
+        cartQueryKey,
         previousCart.filter((i) => i.id !== id)
       );
 
@@ -159,7 +171,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     },
     onError: (err: any, _id, context) => {
       if (context?.previousCart) {
-        queryClient.setQueryData(["cart"], context.previousCart);
+        queryClient.setQueryData(cartQueryKey, context.previousCart);
       }
       toast.error(err.response?.data?.message || "Failed to remove item");
     },
@@ -192,7 +204,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Rollback this specific product to its confirmed snapshot
         const lastConfirmed = confirmedSnapshots.current[productId];
         if (typeof lastConfirmed === "number") {
-          queryClient.setQueryData<CartItem[]>(["cart"], (current) => {
+          queryClient.setQueryData<CartItem[]>(cartQueryKey, (current) => {
             if (!current) return [];
             if (lastConfirmed <= 0) {
               return current.filter((i) => i.id !== productId);
@@ -208,13 +220,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         );
       }
     },
-    [queryClient]
+    [cartQueryKey, queryClient]
   );
 
   /* ---------------- UPDATE QUANTITY (INSTANT OPTIMISTIC + DEBOUNCED PERSISTENCE) ---------------- */
   const updateQuantity = useCallback(
     (id: string, actionOrQty: "increase" | "decrease" | number) => {
-      const currentCart = queryClient.getQueryData<CartItem[]>(["cart"]) || [];
+      const currentCart =
+        queryClient.getQueryData<CartItem[]>(cartQueryKey) || [];
       const currentItem = currentCart.find((i) => i.id === id);
 
       if (!currentItem) return;
@@ -243,7 +256,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         );
       }
 
-      queryClient.setQueryData<CartItem[]>(["cart"], updatedCart);
+      queryClient.setQueryData<CartItem[]>(cartQueryKey, updatedCart);
 
       // 2. DEBOUNCED FINAL-QUANTITY SYNC (350ms)
       // Rapid clicks (+ + + +) repeatedly cancel the previous timer
@@ -257,7 +270,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         persistQuantityToBackend(id, nextQuantity);
       }, 350);
     },
-    [queryClient, persistQuantityToBackend]
+    [cartQueryKey, queryClient, persistQuantityToBackend]
   );
 
   /* ---------------- CLEAR CART ---------------- */
@@ -267,15 +280,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     debounceTimers.current = {};
     confirmedSnapshots.current = {};
 
-    queryClient.setQueryData<CartItem[]>(["cart"], []);
+    queryClient.setQueryData<CartItem[]>(cartQueryKey, []);
 
     try {
       await api.delete("/cart/clear");
     } catch {
       // Even if clear endpoint fails or doesn't exist, invalidate cache
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: cartQueryKey });
     }
-  }, [queryClient]);
+  }, [cartQueryKey, queryClient]);
 
   // Clean up timers on unmount
   useEffect(() => {
