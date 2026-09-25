@@ -135,7 +135,7 @@ export default function Index() {
                 {/* Right Column: Photography Visual Area */}
                 <div className="lg:col-span-6 relative min-h-[320px] sm:min-h-[400px] lg:min-h-full overflow-hidden bg-black/5">
                   <img
-                    src="/banners/hero-makhana.webp"
+                    src="https://plain-apac-prod-public.komododecks.com/202609/25/i8h6iOLqE10UBrEnW8yV/image.webp"
                     alt="DesiiGlobal Premium Organic Roasted Makhana Collection"
                     className="w-full h-full object-cover object-center scale-100 hover:scale-105 transition-transform duration-700"
                     fetchPriority="high"
